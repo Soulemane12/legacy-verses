@@ -4,7 +4,7 @@ import { useState } from "react";
 
 const links = [
   { href: "/", label: "Home" },
-  { href: "/products", label: "T-Shirts" },
+  { href: "/products", label: "Products" },
 ];
 
 export default function Navbar() {
@@ -27,7 +27,7 @@ export default function Navbar() {
             href="/customize"
             className="bg-gold text-white px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
           >
-            Design Yours
+            Create Your Portrait
           </Link>
         </div>
 
@@ -50,7 +50,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link href="/customize" onClick={() => setOpen(false)} className="text-gold font-semibold">
-            Design Yours →
+            Create Your Portrait →
           </Link>
         </div>
       )}

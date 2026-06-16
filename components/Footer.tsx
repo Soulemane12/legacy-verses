@@ -9,7 +9,7 @@ export default function Footer() {
             Legacy Verses<span className="text-gold">™</span>
           </p>
           <p className="text-sm text-cream/60 leading-relaxed">
-            Where Memories Meet God's Word. Faith-based memorial T-shirts crafted with love, Scripture, and compassion.
+            Where Memories Meet God's Word. Scripture portrait memorial products — their face, drawn from His Word.
           </p>
         </div>
 
@@ -17,18 +17,18 @@ export default function Footer() {
           <p className="font-semibold mb-4 text-gold text-xs uppercase tracking-widest">Navigate</p>
           <div className="flex flex-col gap-2 text-sm text-cream/60">
             <Link href="/" className="hover:text-gold transition-colors w-fit">Home</Link>
-            <Link href="/products" className="hover:text-gold transition-colors w-fit">T-Shirts</Link>
-            <Link href="/customize" className="hover:text-gold transition-colors w-fit">Design Yours</Link>
+            <Link href="/products" className="hover:text-gold transition-colors w-fit">Products</Link>
+            <Link href="/customize" className="hover:text-gold transition-colors w-fit">Create Your Portrait</Link>
           </div>
         </div>
 
         <div>
           <p className="font-semibold mb-4 text-gold text-xs uppercase tracking-widest">Start an Order</p>
           <p className="text-sm text-cream/60 mb-3">
-            Upload your photo, choose a scripture, and we'll handle the rest.
+            Upload a photo, choose a verse, and we'll recreate their portrait from scripture — on any product you need.
           </p>
           <Link href="/customize" className="text-gold hover:underline text-sm w-fit block">
-            Customize now →
+            Create a portrait →
           </Link>
         </div>
       </div>

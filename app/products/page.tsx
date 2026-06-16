@@ -1,99 +1,143 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Memorial T-Shirt — Legacy Verses™",
+  title: "Products — Legacy Verses™",
   description:
-    "Custom memorial T-shirts featuring your loved one's photo, a meaningful Bible verse, name, and dates. Premium quality. Faith-inspired.",
+    "Bible verse portrait memorial products — T-shirts, mugs, blankets, canvas prints, phone cases, and more. Your loved one's image created from scripture.",
 };
 
-const includes = [
-  "Your loved one's photo printed in full color",
-  "Your chosen Bible verse in elegant typography",
-  "Full name and significant dates",
-  "Premium quality unisex T-shirt",
-  "Available in all sizes (S–5XL)",
-  "Multiple color options (Black, White, Navy, Maroon)",
+const categories = [
+  {
+    icon: "👕",
+    name: "Apparel",
+    tagline: "Wear their memory close.",
+    desc: "Each garment features your loved one's scripture portrait — their face formed by the words of the verse. Available in sizes S–5XL.",
+    items: ["Unisex T-Shirts", "Hoodies & Sweatshirts", "Polo Shirts", "Baseball Caps", "Jackets", "Tote Bags"],
+  },
+  {
+    icon: "☕",
+    name: "Drinkware",
+    tagline: "Start every morning in their memory.",
+    desc: "A full-wrap portrait on every mug and tumbler so the scripture surrounds the image from every angle.",
+    items: ["Coffee Mugs", "Travel Mugs", "Stainless Tumblers", "Water Bottles", "Glass Tumblers"],
+  },
+  {
+    icon: "🖼️",
+    name: "Art & Prints",
+    tagline: "Gallery-quality, scripture-built.",
+    desc: "The portrait rendered at full resolution for display in the home — from canvas gallery wraps to museum-grade frames.",
+    items: ["Canvas Gallery Wrap", "Framed Print", "Acrylic Display", "Metal Print", "Digital Download", "Memorial Poster"],
+  },
+  {
+    icon: "🛋️",
+    name: "Home & Lifestyle",
+    tagline: "Surround your home with their legacy.",
+    desc: "Soft goods and home accents that bring the portrait into everyday life — comforting, beautiful, and faith-filled.",
+    items: ["Sherpa Blanket", "Throw Blanket", "Decorative Pillow", "Pillow Case", "Wall Tapestry", "Mouse Pad", "Memorial Candle"],
+  },
+  {
+    icon: "📱",
+    name: "Accessories",
+    tagline: "Carry them everywhere.",
+    desc: "Slim, protective cases and everyday carry items featuring the scripture portrait on the back.",
+    items: ["iPhone Cases", "Android Cases", "Laptop Sleeves", "Keychains", "Ornaments", "Luggage Tags"],
+  },
+  {
+    icon: "📖",
+    name: "Family Legacy Collection",
+    tagline: "Preserve the story for generations.",
+    desc: "Bound keepsakes, journals, and Bibles that carry the portrait and scripture together — heirlooms meant to be passed down.",
+    items: ["Tribute & Memory Book", "Prayer Journal", "Personalized Bible", "Memorial Calendar", "Family Recipe Book", "Guest Sign-In Book"],
+  },
+  {
+    icon: "⛪",
+    name: "Funeral & Church Packages",
+    tagline: "Dignified tributes for the service.",
+    desc: "Professional memorial materials for the celebration of life — designed, printed, and delivered quickly.",
+    items: ["Memorial Programs", "Prayer Cards", "Funeral Bulletin", "Church Banner", "Lapel Pins", "Memorial Bookmarks"],
+  },
 ];
 
 export default function Products() {
   return (
     <main>
+      {/* Header */}
       <section className="bg-navy py-20 px-4 sm:px-6 text-center">
         <div className="max-w-3xl mx-auto">
-          <p className="text-gold text-xs font-semibold uppercase tracking-widest mb-4">Our Product</p>
-          <h1 className="text-4xl sm:text-5xl font-bold text-cream mb-4">Custom Memorial T-Shirt</h1>
-          <p className="text-cream/70 text-lg leading-relaxed">
-            A wearable tribute to the ones you love — personalized with faith, love, and Scripture.
+          <p className="text-gold text-xs font-semibold uppercase tracking-widest mb-4">Full Catalog</p>
+          <h1 className="text-4xl sm:text-5xl font-bold text-cream mb-4">
+            One Portrait. Every Product.
+          </h1>
+          <p className="text-cream/70 text-lg leading-relaxed max-w-2xl mx-auto">
+            Your loved one's image — recreated from the words of a Bible verse —
+            applied to whatever your family needs to honor their memory.
           </p>
         </div>
       </section>
 
-      <section className="bg-soft py-20 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* T-shirt visual mockup */}
-          <div className="flex justify-center">
-            <div className="relative w-72">
-              {/* Shirt SVG shape */}
-              <svg viewBox="0 0 200 220" className="w-full drop-shadow-lg" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M60 10 Q70 4 80 2 Q90 12 100 14 Q110 12 120 2 Q130 4 140 10 L190 40 L165 65 L155 55 L155 210 L45 210 L45 55 L35 65 L10 40 Z"
-                  fill="#1E3558"
-                  stroke="#1E3558"
-                  strokeWidth="1"
-                />
-                {/* Print area */}
-                <rect x="65" y="70" width="70" height="110" rx="4" fill="white" fillOpacity="0.08" />
-                {/* Photo circle */}
-                <circle cx="100" cy="100" r="22" fill="white" fillOpacity="0.15" stroke="#C9944A" strokeWidth="1.5" />
-                <text x="100" y="104" textAnchor="middle" fill="#C9944A" fontSize="10" fontFamily="serif">Photo</text>
-                {/* Verse line */}
-                <line x1="72" y1="132" x2="128" y2="132" stroke="#C9944A" strokeWidth="0.5" strokeOpacity="0.6" />
-                <text x="100" y="145" textAnchor="middle" fill="white" fillOpacity="0.7" fontSize="5.5" fontFamily="serif" fontStyle="italic">"I can do all things through</text>
-                <text x="100" y="153" textAnchor="middle" fill="white" fillOpacity="0.7" fontSize="5.5" fontFamily="serif" fontStyle="italic">Christ who strengthens me."</text>
-                <text x="100" y="162" textAnchor="middle" fill="#C9944A" fontSize="5" fontFamily="serif">— Phil. 4:13</text>
-                {/* Name area */}
-                <line x1="75" y1="170" x2="125" y2="170" stroke="white" strokeWidth="0.3" strokeOpacity="0.3" />
-                <text x="100" y="180" textAnchor="middle" fill="white" fillOpacity="0.5" fontSize="4.5" fontFamily="serif">IN LOVING MEMORY</text>
-                <text x="100" y="188" textAnchor="middle" fill="white" fillOpacity="0.8" fontSize="6" fontFamily="serif" fontWeight="bold">Mary Jane Smith</text>
-              </svg>
-            </div>
-          </div>
-
-          {/* Details */}
-          <div>
-            <h2 className="text-2xl font-bold text-navy mb-2">What's Included</h2>
-            <p className="text-charcoal/65 text-sm mb-6 leading-relaxed">
-              Every shirt is made to order and carefully reviewed before printing to ensure the highest quality tribute.
-            </p>
-            <ul className="flex flex-col gap-3 mb-8">
-              {includes.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm text-charcoal/75">
-                  <span className="text-gold mt-0.5 shrink-0">✦</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/customize"
-              className="inline-block bg-gold text-white font-semibold px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity text-sm"
-            >
-              Customize Your Shirt →
-            </Link>
-          </div>
+      {/* How the portrait works */}
+      <section className="bg-cream py-14 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-2xl font-bold text-navy mb-4">What Makes It Different</h2>
+          <p className="text-charcoal/65 leading-relaxed text-sm">
+            Every product starts with the same foundation: a scripture portrait.
+            We take your uploaded photo and use the Bible verse you choose to reconstruct
+            your loved one's likeness — their face is drawn entirely from the text of the scripture,
+            word by word, in varying sizes and densities that follow the light and shadow of the original photo.
+            The result is a portrait that <strong className="text-navy">is</strong> the verse —
+            not one that just quotes it.
+          </p>
         </div>
       </section>
 
-      <section className="bg-cream py-14 px-4 sm:px-6 text-center border-t border-soft">
-        <p className="text-navy text-lg font-semibold mb-2">Ready to honor their legacy?</p>
-        <p className="text-charcoal/60 text-sm mb-6">
-          Upload a photo, pick a verse, and we'll take care of the rest.
-        </p>
-        <Link
-          href="/customize"
-          className="bg-navy text-cream font-semibold px-8 py-3 rounded-full hover:opacity-90 transition-opacity inline-block text-sm"
-        >
-          Start Designing
-        </Link>
+      {/* Product categories */}
+      <section className="bg-soft py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {categories.map((cat) => (
+            <div key={cat.name} className="bg-white rounded-2xl p-7 border border-soft shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{cat.icon}</span>
+                <div>
+                  <h2 className="font-bold text-navy text-lg leading-tight">{cat.name}</h2>
+                  <p className="text-gold text-xs font-medium italic">{cat.tagline}</p>
+                </div>
+              </div>
+              <p className="text-charcoal/65 text-sm leading-relaxed">{cat.desc}</p>
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                {cat.items.map((item) => (
+                  <li key={item} className="text-xs text-charcoal/70 flex items-center gap-1.5">
+                    <span className="text-gold text-[8px]">✦</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto pt-2">
+                <Link
+                  href="/customize"
+                  className="text-xs font-semibold text-gold hover:underline"
+                >
+                  Order this category →
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-navy py-16 px-4 sm:px-6 text-center">
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-2xl font-bold text-cream mb-3">Ready to create their portrait?</h2>
+          <p className="text-cream/60 text-sm mb-7">
+            Upload a photo, choose a verse, and see it come to life — then select any products you'd like.
+          </p>
+          <Link
+            href="/customize"
+            className="bg-gold text-white font-semibold px-9 py-3.5 rounded-full hover:opacity-90 transition-opacity inline-block text-sm"
+          >
+            Start Creating →
+          </Link>
+        </div>
       </section>
     </main>
   );
