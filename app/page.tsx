@@ -1,65 +1,118 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const features = [
+  { icon: "📷", title: "Upload a Photo", desc: "Add a treasured photo of your loved one." },
+  { icon: "📖", title: "Choose a Verse", desc: "Pick from popular scriptures or write your own." },
+  { icon: "✍️", title: "Add Their Name", desc: "Include their name and dates to personalize." },
+  { icon: "👕", title: "We Handle the Rest", desc: "Premium quality T-shirt printed with care." },
+];
+
+const whyUs = [
+  { icon: "✝️", title: "Faith-Centered", desc: "Every design is rooted in Scripture and created with faith at the forefront." },
+  { icon: "🎨", title: "Fully Custom", desc: "Each piece is personalized with your loved one's photo, verse, and story." },
+  { icon: "⭐", title: "Premium Quality", desc: "High-quality printing and materials built to last for generations." },
+  { icon: "💙", title: "Compassionate Service", desc: "We serve families with care, empathy, and fast turnaround." },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main>
+      {/* Hero */}
+      <section className="bg-navy py-24 px-4 sm:px-6 text-center">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-gold text-xs font-semibold uppercase tracking-widest mb-5">
+            Faith · Art · Scripture
           </p>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-cream leading-tight mb-6">
+            Preserve a Legacy.<br />
+            <span className="text-gold">Honor a Life.</span>
+          </h1>
+          <p className="text-cream/75 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+            Custom memorial T-shirts featuring your loved one's photo and a meaningful Bible verse — designed with faith, printed with love.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/customize"
+              className="bg-gold text-white font-semibold px-8 py-3.5 rounded-full hover:opacity-90 transition-opacity text-sm"
+            >
+              Design Your Shirt
+            </Link>
+            <Link
+              href="/products"
+              className="border border-cream/30 text-cream font-semibold px-8 py-3.5 rounded-full hover:bg-cream/10 transition-colors text-sm"
+            >
+              See the Product
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* How it works */}
+      <section className="bg-cream py-20 px-4 sm:px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-gold font-semibold text-xs uppercase tracking-widest mb-3">How It Works</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-navy">Four Simple Steps</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((f, i) => (
+              <div key={f.title} className="bg-white rounded-2xl p-6 border border-soft shadow-sm text-center">
+                <div className="w-8 h-8 rounded-full bg-navy text-cream text-xs font-bold flex items-center justify-center mx-auto mb-3">
+                  {i + 1}
+                </div>
+                <div className="text-3xl mb-3">{f.icon}</div>
+                <h3 className="font-semibold text-navy text-sm mb-1">{f.title}</h3>
+                <p className="text-charcoal/60 text-xs leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link
+              href="/customize"
+              className="inline-block bg-navy text-cream font-semibold px-8 py-3 rounded-full hover:opacity-90 transition-opacity text-sm"
+            >
+              Start Designing →
+            </Link>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="bg-soft py-20 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-gold font-semibold text-xs uppercase tracking-widest mb-3">Why Legacy Verses™</p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-navy">Built on Faith & Love</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {whyUs.map((item) => (
+              <div key={item.title} className="text-center">
+                <div className="text-4xl mb-4">{item.icon}</div>
+                <h3 className="font-semibold text-navy text-lg mb-2">{item.title}</h3>
+                <p className="text-charcoal/65 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-navy py-20 px-4 sm:px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-cream mb-4">
+            Every Legacy Has a Verse.
+          </h2>
+          <p className="text-cream/65 mb-8 text-lg">
+            Let us help you find it — and wear it with pride.
+          </p>
+          <Link
+            href="/customize"
+            className="bg-gold text-white font-semibold px-10 py-4 rounded-full hover:opacity-90 transition-opacity inline-block"
+          >
+            Design Your Memorial Shirt
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }
