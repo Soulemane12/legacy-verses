@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import TshirtPreview from "@/components/TshirtPreview";
+import TshirtViewer from "@/components/TshirtViewer";
 
 const popularVerses = [
   { ref: "Philippians 4:13", text: "I can do all things through Christ who strengthens me." },
@@ -72,8 +72,6 @@ export default function Customize() {
     setLoading(false);
     setSubmitted(true);
   }
-
-  const shirtProps = { photo, verse, verseRef, lovedOne, birthDate, passDate, color: shirtColor };
 
   return (
     <main>
@@ -254,33 +252,35 @@ export default function Customize() {
             </form>
 
             {/* ═══════════════════════════════
-                RIGHT — Live 3D Comparison
+                RIGHT — Interactive 3D Viewer
             ═══════════════════════════════ */}
-            <div className="w-full lg:w-[480px] shrink-0 lg:sticky lg:top-20 flex flex-col gap-5">
+            <div className="w-full lg:w-[460px] shrink-0 lg:sticky lg:top-20 flex flex-col gap-4">
 
               {/* Color picker */}
               <div className="bg-white rounded-2xl px-5 py-4 border border-soft shadow-sm flex items-center gap-4">
-                <span className="text-xs font-semibold text-charcoal/60 uppercase tracking-wider">Color</span>
-                <div className="flex gap-2">
+                <span className="text-xs font-semibold text-charcoal/60 uppercase tracking-wider shrink-0">
+                  Shirt Color
+                </span>
+                <div className="flex gap-2.5">
                   {SHIRT_COLOR_OPTIONS.map((opt) => (
                     <button
                       key={opt.key}
                       type="button"
                       title={opt.label}
                       onClick={() => setShirtColor(opt.key)}
-                      className="relative"
+                      className="relative flex items-center justify-center"
                     >
                       <span
                         className={`block w-7 h-7 rounded-full border-2 transition-all duration-200 ${
                           shirtColor === opt.key
                             ? "border-gold scale-110 shadow-md"
-                            : "border-transparent hover:scale-105"
+                            : "border-soft/80 hover:scale-105 hover:border-gold/40"
                         }`}
                         style={{ backgroundColor: opt.hex }}
                       />
                       {shirtColor === opt.key && (
                         <span
-                          className="absolute inset-0 flex items-center justify-center text-[10px]"
+                          className="absolute text-[10px] font-bold pointer-events-none"
                           style={{ color: opt.key === "white" ? "#1C1C2A" : "#fff" }}
                         >
                           ✓
@@ -289,54 +289,26 @@ export default function Customize() {
                     </button>
                   ))}
                 </div>
-                <span className="text-xs text-charcoal/50 ml-auto capitalize">{shirtColor}</span>
+                <span className="text-xs text-charcoal/45 ml-auto capitalize">{shirtColor}</span>
               </div>
 
-              {/* Side-by-side comparison */}
-              <div className="bg-white rounded-2xl border border-soft shadow-sm overflow-hidden">
-                {/* Labels */}
-                <div className="grid grid-cols-2 border-b border-soft">
-                  <div className="px-4 py-2.5 text-center border-r border-soft">
-                    <p className="text-[10px] font-semibold text-charcoal/50 uppercase tracking-wider">Original</p>
-                  </div>
-                  <div className="px-4 py-2.5 text-center relative">
-                    <p className="text-[10px] font-semibold text-gold uppercase tracking-wider">Your Design</p>
-                    {(photo || verse || lovedOne) && (
-                      <span className="absolute top-1.5 right-3 w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Shirts */}
-                <div className="grid grid-cols-2 gap-0 bg-[#F7F4EF] p-4 gap-3">
-                  {/* Blank shirt */}
-                  <div>
-                    <TshirtPreview
-                      uid="blank"
-                      {...shirtProps}
-                      showContent={false}
-                      tilt="right"
-                    />
-                  </div>
-
-                  {/* Design shirt */}
-                  <div>
-                    <TshirtPreview
-                      uid="design"
-                      {...shirtProps}
-                      showContent={true}
-                      tilt="left"
-                    />
-                  </div>
-                </div>
-
-                {/* Caption */}
-                <div className="px-5 py-3 border-t border-soft text-center">
-                  <p className="text-[10px] text-charcoal/40">
-                    Preview updates live as you fill in the form
-                  </p>
-                </div>
+              {/* 3D Shirt Viewer */}
+              <div className="bg-[#1a2540] rounded-2xl p-6 border border-[#1a2540] shadow-xl">
+                <TshirtViewer
+                  photo={photo}
+                  verse={verse}
+                  verseRef={verseRef}
+                  lovedOne={lovedOne}
+                  birthDate={birthDate}
+                  passDate={passDate}
+                  color={shirtColor}
+                />
               </div>
+
+              {/* Hint */}
+              <p className="text-[10px] text-charcoal/35 text-center">
+                Design updates live · Drag to spin · Front &amp; back view
+              </p>
             </div>
 
           </div>
