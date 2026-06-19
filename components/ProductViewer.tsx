@@ -73,20 +73,24 @@ function Controls({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MUG — true CSS 3D cylinder (24 panels) so the portrait wraps realistically
+// CYLINDER3D — shared true CSS 3D cylinder (N panels) that any round product
+// (mug, tumbler, bottle, candle) builds on. The portrait wraps realistically
+// around the body; rim/topper/base/handle are all swappable per product.
 // ─────────────────────────────────────────────────────────────────────────────
-function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null; lidded?: boolean }) {
+function Cylinder3D({
+  portraitUrl, N = 24, R, H, RIM_H = 16,
+  panelBase, rimColor, baseColor, glassy = false,
+  topper, handle,
+}: {
+  portraitUrl: string | null;
+  N?: number; R: number; H: number; RIM_H?: number;
+  panelBase: string; rimColor: string; baseColor: string; glassy?: boolean;
+  topper?: React.ReactNode;
+  handle?: React.ReactNode;
+}) {
   const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
-
-  const N      = 24;          // number of vertical cylinder panels
-  const R      = 84;          // cylinder radius px
-  const H      = 230;         // cylinder body height px
-  const C      = 2 * Math.PI * R; // circumference ≈ 528px
-  const pW     = C / N;       // width of each panel ≈ 22px
-  const RIM_H  = 18;          // ceramic rim height above body
-
-  // handle opacity: visible on right side, fades as left side faces viewer
-  const handleOp = Math.max(0, Math.min(1, 0.45 + Math.sin((rotY * Math.PI) / 180) * 0.85));
+  const C  = 2 * Math.PI * R; // circumference
+  const pW = C / N;           // width of each panel
 
   const panelDrag = {
     onMouseDown: (e: React.MouseEvent) => down(e.clientX),
@@ -102,7 +106,6 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
     <div className="select-none flex flex-col">
       <Controls isFront={isFront} onFront={() => goTo(0)} onBack={() => goTo(180)} />
 
-      {/* perspective stage */}
       <div style={{ perspective: "700px", perspectiveOrigin: "50% 28%" }}
            className={dragging ? "cursor-grabbing" : "cursor-grab"}
            {...panelDrag}>
@@ -118,91 +121,41 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
           margin: "0 auto",
         }}>
 
-          {/* ── Top opening disc (coffee visible inside) — or a travel lid ── */}
-          {/* Ceramic/lid rim ring: slightly above body top */}
+          {/* ── Rim ring (sits just above the body) ── */}
           <div style={{
             position: "absolute",
             top: 0, left: 0,
             width: R * 2, height: R * 2,
             borderRadius: "50%",
-            background: lidded ? "#22242B" : "#D8D3CC",
+            background: rimColor,
             marginTop: -R,
             transform: "rotateX(90deg)",
             transformOrigin: "50% 100%",
           }} />
-          {lidded ? (
-            <>
-              {/* Lid dome */}
-              <div style={{
-                position: "absolute",
-                top: R * 0.12, left: R * 0.12,
-                width: R * 1.76, height: R * 1.76,
-                borderRadius: "50%",
-                background: "radial-gradient(ellipse at 35% 35%, #3A3D46 0%, #1C1E24 70%, #101115 100%)",
-                marginTop: -R,
-                transform: "rotateX(90deg)",
-                transformOrigin: "50% 100%",
-              }} />
-              {/* Sip-hole slider */}
-              <div style={{
-                position: "absolute",
-                top: R * 0.42, left: R * 0.62,
-                width: R * 0.5, height: R * 0.3,
-                borderRadius: "40%",
-                background: "#0A0A0D",
-                marginTop: -R,
-                transform: "rotateX(90deg)",
-                transformOrigin: "50% 100%",
-              }} />
-            </>
-          ) : (
-            <>
-              {/* Coffee surface (darker oval inside rim) */}
-              <div style={{
-                position: "absolute",
-                top: R * 0.18, left: R * 0.18,
-                width: R * 1.64, height: R * 1.64,
-                borderRadius: "50%",
-                background: "radial-gradient(ellipse at 38% 38%, #5C3A1E 0%, #2A1508 60%, #1A0E05 100%)",
-                marginTop: -R,
-                transform: "rotateX(90deg)",
-                transformOrigin: "50% 100%",
-              }} />
-              {/* Tiny coffee highlight (light reflection) */}
-              <div style={{
-                position: "absolute",
-                top: R * 0.38, left: R * 0.42,
-                width: R * 0.28, height: R * 0.18,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.12)",
-                marginTop: -R,
-                transform: "rotateX(90deg)",
-                transformOrigin: "50% 100%",
-              }} />
-            </>
-          )}
+
+          {/* ── Topper (liquid surface / lid / cap / flame — product-specific) ── */}
+          {topper}
 
           {/* ── Cylinder panels (portrait wraps around here) ── */}
           {Array.from({ length: N }).map((_, i) => {
             const angle = (i / N) * 360;
-            // shadow darkens toward edges of the cylinder (cos curve)
             const edgeDark = 0.18 * Math.pow(Math.abs(Math.sin((angle * Math.PI) / 180)), 1.4);
 
             return (
               <div key={i} style={{
                 position: "absolute",
-                top: RIM_H, // below rim
+                top: RIM_H,
                 left: `calc(50% - ${(pW + 0.5) / 2}px)`,
-                width: pW + 0.5, // tiny overlap to kill seams
+                width: pW + 0.5,
                 height: H,
                 transform: `rotateY(${angle}deg) translateZ(${R}px)`,
                 transformOrigin: "50% 0",
                 backfaceVisibility: "hidden",
                 WebkitBackfaceVisibility: "hidden",
                 overflow: "hidden",
-                background: "#F5F2EE", // ceramic white base
+                background: panelBase,
+                opacity: glassy ? 0.82 : 1,
               }}>
-                {/* portrait slice */}
                 {portraitUrl && (
                   <div style={{
                     position: "absolute", inset: 0,
@@ -210,19 +163,25 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
                     backgroundSize: `${C}px ${H}px`,
                     backgroundPosition: `${-i * pW}px 0`,
                     backgroundRepeat: "no-repeat",
+                    opacity: glassy ? 0.85 : 1,
                   }} />
                 )}
-                {/* cylindrical edge shading */}
                 <div style={{
                   position: "absolute", inset: 0,
                   background: `rgba(0,0,0,${edgeDark.toFixed(3)})`,
                   pointerEvents: "none",
                 }} />
+                {glassy && (
+                  <div style={{
+                    position: "absolute", inset: 0, pointerEvents: "none",
+                    background: "linear-gradient(90deg, rgba(255,255,255,0.22) 0%, transparent 30%)",
+                  }} />
+                )}
               </div>
             );
           })}
 
-          {/* ── Ceramic rim band (top ring visible above panels) ── */}
+          {/* ── Rim band (thin ring visible above panels) ── */}
           <div style={{
             position: "absolute",
             top: 0, left: 0, right: 0,
@@ -230,7 +189,6 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
             overflow: "hidden",
             pointerEvents: "none",
           }}>
-            {/* Reuse a simplified band of panels for the rim */}
             {Array.from({ length: N }).map((_, i) => {
               const angle = (i / N) * 360;
               const edgeDark = 0.2 * Math.pow(Math.abs(Math.sin((angle * Math.PI) / 180)), 1.2);
@@ -252,11 +210,10 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
             })}
             <div style={{
               position: "absolute", inset: 0,
-              background: "#E8E4DE",
+              background: rimColor,
               borderTop: "1px solid rgba(255,255,255,0.4)",
               borderBottom: "1px solid rgba(0,0,0,0.08)",
               pointerEvents: "none",
-              // flat overlay – only visible panels show through
             }} />
           </div>
 
@@ -266,43 +223,150 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
             bottom: 0, left: 0,
             width: R * 2, height: R * 2,
             borderRadius: "50%",
-            background: "radial-gradient(ellipse, #D8D3CC 40%, #C4BFB8 100%)",
+            background: `radial-gradient(ellipse, ${baseColor} 40%, rgba(0,0,0,0.18) 100%)`,
             marginBottom: -R,
             transform: "rotateX(-90deg)",
             transformOrigin: "50% 0%",
           }} />
 
-          {/* ── Handle (in 3D space on the right side) ──
-               Placed at the right of the cylinder, pre-rotated 90° so it
-               sticks out to the right. rotate‑Y(90deg) then translateZ(R)
-               puts it at the mug's right surface. */}
-          <div style={{
-            position: "absolute",
-            top: H * 0.18 + RIM_H,
-            left: "50%",
-            width: 62,
-            height: H * 0.56,
-            transform: `rotateY(90deg) translateZ(${R}px)`,
-            transformOrigin: "0% 50%",
-            backfaceVisibility: "hidden",
-            WebkitBackfaceVisibility: "hidden",
-            overflow: "visible",
-          }}>
-            <svg viewBox="0 0 62 130" style={{ width: "100%", height: "100%", overflow: "visible" }}>
-              {/* Handle outer arc */}
-              <path d="M 2,0 Q 58,0 58,65 Q 58,130 2,130"
-                    fill="none" stroke="#E2DDD7" strokeWidth="20" strokeLinecap="round" />
-              {/* Handle inner groove (shadow) */}
-              <path d="M 2,0 Q 58,0 58,65 Q 58,130 2,130"
-                    fill="none" stroke="#C0BBB3" strokeWidth="9" strokeLinecap="round" />
-              {/* Handle outer edge highlight */}
-              <path d="M 10,4 Q 56,4 56,65 Q 56,126 10,126"
-                    fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </div>
+          {handle}
         </div>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MUG — ceramic, with handle, open coffee surface or travel lid
+// ─────────────────────────────────────────────────────────────────────────────
+function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null; lidded?: boolean }) {
+  const R = 84, H = 230, RIM_H = 18;
+  return (
+    <Cylinder3D
+      portraitUrl={portraitUrl}
+      R={R} H={H} RIM_H={RIM_H}
+      panelBase="#F5F2EE"
+      rimColor={lidded ? "#22242B" : "#D8D3CC"}
+      baseColor="#D8D3CC"
+      topper={lidded ? (
+        <>
+          <div style={{ position: "absolute", top: R * 0.12, left: R * 0.12, width: R * 1.76, height: R * 1.76, borderRadius: "50%", background: "radial-gradient(ellipse at 35% 35%, #3A3D46 0%, #1C1E24 70%, #101115 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+          <div style={{ position: "absolute", top: R * 0.42, left: R * 0.62, width: R * 0.5, height: R * 0.3, borderRadius: "40%", background: "#0A0A0D", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+        </>
+      ) : (
+        <>
+          <div style={{ position: "absolute", top: R * 0.18, left: R * 0.18, width: R * 1.64, height: R * 1.64, borderRadius: "50%", background: "radial-gradient(ellipse at 38% 38%, #5C3A1E 0%, #2A1508 60%, #1A0E05 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+          <div style={{ position: "absolute", top: R * 0.38, left: R * 0.42, width: R * 0.28, height: R * 0.18, borderRadius: "50%", background: "rgba(255,255,255,0.12)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+        </>
+      )}
+      handle={
+        <div style={{
+          position: "absolute", top: H * 0.18 + RIM_H, left: "50%", width: 62, height: H * 0.56,
+          transform: `rotateY(90deg) translateZ(${R}px)`, transformOrigin: "0% 50%",
+          backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", overflow: "visible",
+        }}>
+          <svg viewBox="0 0 62 130" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+            <path d="M 2,0 Q 58,0 58,65 Q 58,130 2,130" fill="none" stroke="#E2DDD7" strokeWidth="20" strokeLinecap="round" />
+            <path d="M 2,0 Q 58,0 58,65 Q 58,130 2,130" fill="none" stroke="#C0BBB3" strokeWidth="9" strokeLinecap="round" />
+            <path d="M 10,4 Q 56,4 56,65 Q 56,126 10,126" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </div>
+      }
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAINLESS TUMBLER — slim metal cylinder, brushed dome lid + straw slot
+// ─────────────────────────────────────────────────────────────────────────────
+function TumblerViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  const R = 50, H = 290, RIM_H = 10;
+  return (
+    <Cylinder3D
+      portraitUrl={portraitUrl}
+      N={20} R={R} H={H} RIM_H={RIM_H}
+      panelBase="#3A3D45"
+      rimColor="#1E2024"
+      baseColor="#2A2C32"
+      topper={
+        <>
+          <div style={{ position: "absolute", top: R * 0.1, left: R * 0.1, width: R * 1.8, height: R * 1.8, borderRadius: "50%", background: "radial-gradient(ellipse at 35% 30%, #5A5E68 0%, #2A2C32 70%, #15161A 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+          <div style={{ position: "absolute", top: R * 0.62, left: R * 0.42, width: R * 0.4, height: R * 0.22, borderRadius: "40%", background: "#0A0A0C", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+        </>
+      }
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GLASS TUMBLER — translucent glass cylinder, open rim, pale drink surface
+// ─────────────────────────────────────────────────────────────────────────────
+function GlassTumblerViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  const R = 54, H = 220, RIM_H = 10;
+  return (
+    <Cylinder3D
+      portraitUrl={portraitUrl}
+      N={20} R={R} H={H} RIM_H={RIM_H}
+      panelBase="rgba(210,225,232,0.55)"
+      rimColor="rgba(225,235,240,0.7)"
+      baseColor="rgba(190,205,212,0.8)"
+      glassy
+      topper={
+        <div style={{ position: "absolute", top: R * 0.18, left: R * 0.18, width: R * 1.64, height: R * 1.64, borderRadius: "50%", background: "radial-gradient(ellipse at 38% 38%, #E8D9A8 0%, #C9A857 70%, #B89238 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+      }
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WATER BOTTLE — slim sport bottle, screw cap + flip-top loop nozzle
+// ─────────────────────────────────────────────────────────────────────────────
+function WaterBottleViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  const R = 42, H = 280, RIM_H = 12;
+  return (
+    <Cylinder3D
+      portraitUrl={portraitUrl}
+      N={18} R={R} H={H} RIM_H={RIM_H}
+      panelBase="#E8E4DF"
+      rimColor="#1E3558"
+      baseColor="#C9C4BC"
+      topper={
+        <>
+          <div style={{ position: "absolute", top: R * 0.18, left: R * 0.18, width: R * 1.64, height: R * 1.64, borderRadius: "50%", background: "#162844", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+          <div style={{ position: "absolute", top: R * 0.5, left: R * 0.5, width: R, height: R * 0.45, borderRadius: "30%", border: "3px solid #C9944A", background: "transparent", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+        </>
+      }
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANDLE — glass jar with wax surface, wick + flame, portrait wraps as label
+// ─────────────────────────────────────────────────────────────────────────────
+function CandleViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  const R = 46, H = 150, RIM_H = 8;
+  return (
+    <Cylinder3D
+      portraitUrl={portraitUrl}
+      N={18} R={R} H={H} RIM_H={RIM_H}
+      panelBase="#F8F4EC"
+      rimColor="#E8E0CC"
+      baseColor="#D8D0BC"
+      topper={
+        <>
+          <div style={{ position: "absolute", top: R * 0.12, left: R * 0.12, width: R * 1.76, height: R * 1.76, borderRadius: "50%", background: "radial-gradient(ellipse at 40% 40%, #FBF7EC 0%, #F0E8D2 70%, #E0D6B8 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
+          {/* Wick */}
+          <div style={{ position: "absolute", top: -22, left: "50%", transform: "translateX(-50%) translateZ(1px)", width: 2, height: 14, background: "#3A3026" }} />
+          {/* Flame */}
+          <div style={{
+            position: "absolute", top: -34, left: "50%", transform: "translateX(-50%) translateZ(1px)",
+            width: 11, height: 17, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
+            background: "radial-gradient(circle at 50% 70%, #FFD27A 0%, #F5982A 55%, #C9580A 100%)",
+            filter: "drop-shadow(0 0 6px rgba(245,152,42,0.6))",
+          }} />
+        </>
+      }
+    />
   );
 }
 
@@ -880,6 +944,366 @@ function BlanketViewer({ portraitUrl, variant = "sherpa" }: { portraitUrl: strin
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BOOK — closed-book 3D box: front cover, spine, stacked-page edges, back cover
+// ─────────────────────────────────────────────────────────────────────────────
+type BookVariant = "journal" | "prayerjournal" | "bible" | "calendar" | "recipebook" | "guestbook";
+
+function BookViewer({ portraitUrl, variant }: { portraitUrl: string | null; variant: BookVariant }) {
+  const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
+  const DEPTH = 24;
+
+  const covers: Record<BookVariant, { bg: string; trim: string; emblem: string; pageColor: string }> = {
+    journal:       { bg: "#1E3558", trim: "#C9944A", emblem: "✦", pageColor: "#F2EFE6" },
+    prayerjournal: { bg: "#6B4A2A", trim: "#D8B98A", emblem: "🙏", pageColor: "#F2EFE6" },
+    bible:         { bg: "#0E0E18", trim: "#C9944A", emblem: "✝", pageColor: "#E8D9A8" },
+    calendar:      { bg: "#F5F3EE", trim: "#1E3558", emblem: "",  pageColor: "#FFFFFF" },
+    recipebook:    { bg: "#8B5E3C", trim: "#F2EFE6", emblem: "🍳", pageColor: "#F2EFE6" },
+    guestbook:     { bg: "#E8E4DF", trim: "#C9944A", emblem: "✍", pageColor: "#FFFFFF" },
+  };
+  const cover = covers[variant];
+  const pageStripes = `repeating-linear-gradient(0deg, ${cover.pageColor} 0px, ${cover.pageColor} 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 2.4px)`;
+
+  const panelDrag = {
+    onMouseDown:  (e: React.MouseEvent)  => down(e.clientX),
+    onMouseMove:  (e: React.MouseEvent)  => { if (dragging) move(e.clientX); },
+    onMouseUp:    up,
+    onMouseLeave: up,
+    onTouchStart: (e: React.TouchEvent) => { e.preventDefault(); down(e.touches[0].clientX); },
+    onTouchMove:  (e: React.TouchEvent) => { e.preventDefault(); if (dragging) move(e.touches[0].clientX); },
+    onTouchEnd:   up,
+  };
+
+  return (
+    <div className="select-none">
+      <Controls isFront={isFront} onFront={() => goTo(0)} onBack={() => goTo(180)} />
+
+      <div style={{ perspective: "950px", perspectiveOrigin: "50% 50%" }}
+           className={dragging ? "cursor-grabbing" : "cursor-grab"}
+           {...panelDrag}>
+        <div style={{
+          position: "relative", margin: "0 auto", width: "78%", aspectRatio: "0.74",
+          transformStyle: "preserve-3d",
+          transform: `rotateY(${rotY}deg)`,
+          transition: dragging ? "none" : "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)",
+        }}>
+
+          {/* ── Front cover ── */}
+          <div style={{
+            position: "absolute", inset: 0,
+            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+            background: cover.bg,
+            boxShadow: "0 10px 34px rgba(0,0,0,0.55)",
+            border: variant === "calendar" || variant === "guestbook" ? `1px solid rgba(0,0,0,0.08)` : "none",
+          }}>
+            {/* Spiral binding (calendar only) */}
+            {variant === "calendar" && (
+              <div style={{ position: "absolute", top: -4, left: 0, right: 0, height: 10, display: "flex", justifyContent: "space-evenly" }}>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", border: "2px solid #9A9690", background: "#fff" }} />
+                ))}
+              </div>
+            )}
+            {/* Trim border */}
+            <div style={{ position: "absolute", inset: 10, border: `1.5px solid ${cover.trim}`, opacity: 0.55, pointerEvents: "none" }} />
+            {/* Emblem */}
+            {cover.emblem && (
+              <div style={{ position: "absolute", top: 14, left: 0, right: 0, textAlign: "center", fontSize: 18, opacity: 0.85 }}>
+                <span style={{ color: cover.trim }}>{cover.emblem}</span>
+              </div>
+            )}
+            {/* Portrait inset */}
+            <div style={{
+              position: "absolute", inset: "26% 12% 14% 12%",
+              border: `2px solid ${cover.trim}`, overflow: "hidden", background: "rgba(0,0,0,0.15)",
+            }}>
+              {portraitUrl ? (
+                <img src={portraitUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.3 }}>
+                  <span style={{ color: cover.trim, fontSize: 9, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
+                </div>
+              )}
+            </div>
+            {/* Cover surface sheen */}
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "linear-gradient(125deg, rgba(255,255,255,0.12) 0%, transparent 40%, rgba(0,0,0,0.1) 100%)" }} />
+          </div>
+
+          {/* ── Spine (left depth side) ── */}
+          <div style={{
+            position: "absolute", top: 0, left: -DEPTH, width: DEPTH, height: "100%",
+            background: `linear-gradient(to left, ${cover.bg}, rgba(0,0,0,0.35))`,
+            transform: "rotateY(90deg)", transformOrigin: "100% 50%",
+            backfaceVisibility: "hidden",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{ writingMode: "vertical-rl", color: cover.trim, fontSize: 8, letterSpacing: 2, fontFamily: "serif", opacity: 0.7 }}>
+              LEGACY VERSES
+            </span>
+          </div>
+
+          {/* ── Page-edge stack (right side) ── */}
+          <div style={{
+            position: "absolute", top: 2, right: -DEPTH, width: DEPTH, height: "calc(100% - 4px)",
+            backgroundImage: pageStripes,
+            transform: "rotateY(-90deg)", transformOrigin: "0% 50%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Page-edge stack (top) ── */}
+          <div style={{
+            position: "absolute", top: -DEPTH, left: 2, width: "calc(100% - 4px)", height: DEPTH,
+            backgroundImage: `repeating-linear-gradient(90deg, ${cover.pageColor} 0px, ${cover.pageColor} 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 2.4px)`,
+            transform: "rotateX(90deg)", transformOrigin: "50% 100%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Page-edge stack (bottom) ── */}
+          <div style={{
+            position: "absolute", bottom: -DEPTH, left: 2, width: "calc(100% - 4px)", height: DEPTH,
+            backgroundImage: `repeating-linear-gradient(90deg, ${cover.pageColor} 0px, ${cover.pageColor} 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 2.4px)`,
+            transform: "rotateX(-90deg)", transformOrigin: "50% 0%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Back cover ── */}
+          <div style={{
+            position: "absolute", inset: 0,
+            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+            background: cover.bg,
+          }}>
+            <div style={{ position: "absolute", inset: 10, border: `1.5px solid ${cover.trim}`, opacity: 0.4 }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOTE BAG — canvas box with gusseted sides + 3D-space handles
+// ─────────────────────────────────────────────────────────────────────────────
+function ToteViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
+  const DEPTH = 26;
+  const canvasWeave = `repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 3px), repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0px, rgba(0,0,0,0.04) 1px, transparent 1px, transparent 3px)`;
+
+  const panelDrag = {
+    onMouseDown:  (e: React.MouseEvent)  => down(e.clientX),
+    onMouseMove:  (e: React.MouseEvent)  => { if (dragging) move(e.clientX); },
+    onMouseUp:    up,
+    onMouseLeave: up,
+    onTouchStart: (e: React.TouchEvent) => { e.preventDefault(); down(e.touches[0].clientX); },
+    onTouchMove:  (e: React.TouchEvent) => { e.preventDefault(); if (dragging) move(e.touches[0].clientX); },
+    onTouchEnd:   up,
+  };
+
+  return (
+    <div className="select-none">
+      <Controls isFront={isFront} onFront={() => goTo(0)} onBack={() => goTo(180)} />
+
+      <div style={{ perspective: "950px", perspectiveOrigin: "50% 35%" }}
+           className={dragging ? "cursor-grabbing" : "cursor-grab"}
+           {...panelDrag}>
+        <div style={{
+          position: "relative", margin: "0 auto", width: "70%", aspectRatio: "0.86",
+          transformStyle: "preserve-3d",
+          transform: `rotateY(${rotY}deg)`,
+          transition: dragging ? "none" : "transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94)",
+        }}>
+
+          {/* ── Front canvas panel ── */}
+          <div style={{
+            position: "absolute", inset: 0,
+            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+            background: "#D0C4A8",
+            backgroundImage: canvasWeave,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{
+              position: "absolute", inset: "14% 10%",
+              border: "2px solid #8B7040", overflow: "hidden", background: "rgba(0,0,0,0.08)",
+            }}>
+              {portraitUrl ? (
+                <img src={portraitUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.3 }}>
+                  <span style={{ color: "#5C4A30", fontSize: 9, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right gusset ── */}
+          <div style={{
+            position: "absolute", top: 0, right: -DEPTH, width: DEPTH, height: "100%",
+            background: "#B8AC8E", backgroundImage: canvasWeave,
+            transform: "rotateY(-90deg)", transformOrigin: "0% 50%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Left gusset ── */}
+          <div style={{
+            position: "absolute", top: 0, left: -DEPTH, width: DEPTH, height: "100%",
+            background: "#A89C7E", backgroundImage: canvasWeave,
+            transform: "rotateY(90deg)", transformOrigin: "100% 50%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Bottom gusset ── */}
+          <div style={{
+            position: "absolute", bottom: -DEPTH, left: 0, width: "100%", height: DEPTH,
+            background: "#A89C7E", backgroundImage: canvasWeave,
+            transform: "rotateX(-90deg)", transformOrigin: "50% 0%",
+            backfaceVisibility: "hidden",
+          }} />
+
+          {/* ── Back canvas panel ── */}
+          <div style={{
+            position: "absolute", inset: 0,
+            backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+            background: "#C4B89A", backgroundImage: canvasWeave,
+          }}>
+            <p style={{ position: "absolute", bottom: "10%", left: 0, right: 0, textAlign: "center", fontSize: 9, letterSpacing: 3, fontFamily: "serif", color: "#5C4A30", opacity: 0.7 }}>
+              LEGACY VERSES™
+            </p>
+          </div>
+
+          {/* ── Handles (arc up from front+back top edge, in 3D space) ── */}
+          {[ -0.62, 0.62 ].map((xFrac, idx) => (
+            <div key={idx} style={{
+              position: "absolute",
+              top: -34, left: `calc(50% + ${xFrac * 50}%)`,
+              width: 30, height: 44,
+              transform: "translateX(-50%) translateZ(1px)",
+              backfaceVisibility: "hidden",
+            }}>
+              <svg viewBox="0 0 30 44" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+                <path d="M 4,44 Q 4,4 15,4 Q 26,4 26,44" fill="none" stroke="#6B5638" strokeWidth="6" strokeLinecap="round" />
+                <path d="M 4,44 Q 4,4 15,4 Q 26,4 26,44" fill="none" stroke="#8B7040" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORNAMENT — shaded sphere bauble with cap + hanger loop
+// ─────────────────────────────────────────────────────────────────────────────
+function OrnamentViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div style={{ perspective: "700px" }}>
+        <div style={{
+          position: "relative", width: 190, height: 190,
+          filter: "drop-shadow(0 24px 40px rgba(0,0,0,0.6))",
+        }}>
+          {/* Sphere base shading */}
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "radial-gradient(circle at 32% 28%, #4A6BA8 0%, #1E3558 55%, #0E1C32 100%)",
+          }} />
+          {/* Portrait clipped to circle, slightly inset so sphere shading frames it */}
+          <div style={{
+            position: "absolute", inset: 14, borderRadius: "50%", overflow: "hidden",
+          }}>
+            {portraitUrl ? (
+              <img src={portraitUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.92 }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: "#1E3558" }} />
+            )}
+            {/* Sphere shading overlay on top of the portrait so it still reads as round */}
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.35) 0%, transparent 35%, rgba(0,0,0,0.1) 70%, rgba(0,0,0,0.45) 100%)",
+            }} />
+          </div>
+          {/* Glossy highlight */}
+          <div style={{
+            position: "absolute", top: "14%", left: "20%", width: "26%", height: "16%",
+            borderRadius: "50%", background: "rgba(255,255,255,0.5)", filter: "blur(2px)",
+          }} />
+          {/* Gold cap */}
+          <div style={{
+            position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)",
+            width: 26, height: 22, background: "linear-gradient(to bottom, #E0B468, #B8893A)",
+            borderRadius: "4px 4px 8px 8px",
+          }} />
+          {/* Hanger loop */}
+          <div style={{
+            position: "absolute", top: -26, left: "50%", transform: "translateX(-50%)",
+            width: 12, height: 12, borderRadius: "50%",
+            border: "2.5px solid #C9944A", background: "transparent",
+          }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAP — domed crown panels + curved brim, embroidered portrait patch
+// ─────────────────────────────────────────────────────────────────────────────
+function CapViewer({ portraitUrl }: { portraitUrl: string | null }) {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div style={{ perspective: "700px" }}>
+        <div style={{
+          position: "relative", width: 220, height: 170,
+          transform: "rotateX(8deg)",
+          filter: "drop-shadow(0 20px 36px rgba(0,0,0,0.55))",
+        }}>
+          {/* Crown panels (curved dome made of 5 wedge panels) */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "72%", display: "flex" }}>
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} style={{
+                flex: 1, height: "100%",
+                background: i % 2 === 0 ? "#1E3558" : "#192C49",
+                borderRadius: i === 0 ? "60% 0 0 0" : i === 4 ? "0 60% 0 0" : "0",
+                borderLeft: i > 0 ? "1px solid rgba(0,0,0,0.25)" : "none",
+              }} />
+            ))}
+          </div>
+          {/* Crown top curve mask */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "30%",
+            background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)",
+            borderRadius: "50% 50% 0 0",
+          }} />
+          {/* Button on top */}
+          <div style={{ position: "absolute", top: -5, left: "50%", transform: "translateX(-50%)", width: 10, height: 10, borderRadius: "50%", background: "#C9944A" }} />
+          {/* Embroidered portrait patch on front panel */}
+          <div style={{
+            position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)",
+            width: 76, height: 76, borderRadius: "50%", overflow: "hidden",
+            border: "3px solid #C9944A", background: "#0E1C32",
+          }}>
+            {portraitUrl ? (
+              <img src={portraitUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.3 }}>
+                <span style={{ color: "white", fontSize: 8, letterSpacing: 1, fontFamily: "serif" }}>PORTRAIT</span>
+              </div>
+            )}
+          </div>
+          {/* Curved brim */}
+          <svg viewBox="0 0 220 60" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: "34%", overflow: "visible" }}>
+            <path d="M 10,4 Q 110,46 210,4 Q 215,30 110,40 Q 5,30 10,4 Z" fill="#162844" />
+            <path d="M 10,4 Q 110,46 210,4" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2" />
+          </svg>
+          {/* Adjustable strap hint (back) */}
+          <div style={{ position: "absolute", top: "8%", right: "2%", width: 14, height: 8, background: "#0E1C32", borderRadius: 2, opacity: 0.7 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GENERIC — every catalog item that doesn't need a dedicated 3D component.
 // `shapeKey` is the product's tab key (not the display label), so multi-word
 // labels like "Wall Tapestry" still resolve to a single lookup key ("tapestry").
@@ -889,27 +1313,15 @@ function GenericViewer({
 }: { portraitUrl: string | null; shapeKey: string }) {
   const lc = shapeKey.toLowerCase();
 
-  // Shape profiles per product
+  // Shape profiles per product (flat/2D goods only — 3D-shaped products have
+  // their own dedicated viewers: drinkware, books, tote, ornament, cap)
   const profiles: Record<string, { aspect: string; radius: string; bg: string; padding: number }> = {
     pillow:        { aspect: "1/1",    radius: "50%",   bg: "#E8E4DF", padding: 18 },
     pillowcase:    { aspect: "4/3",    radius: "6px",   bg: "#E8E4DF", padding: 14 },
-    tote:          { aspect: "3/4",    radius: "6px",   bg: "#D0C4A8", padding: 14 },
-    journal:       { aspect: "3/4",    radius: "4px",   bg: "#1E3558", padding: 10 },
-    prayerjournal: { aspect: "3/4",    radius: "4px",   bg: "#6B4A2A", padding: 10 },
-    bible:         { aspect: "3/4",    radius: "4px",   bg: "#0E0E18", padding: 16 },
-    calendar:      { aspect: "3/4",    radius: "4px",   bg: "#F5F3EE", padding: 14 },
-    recipebook:    { aspect: "3/4",    radius: "4px",   bg: "#8B5E3C", padding: 10 },
-    guestbook:     { aspect: "3/4",    radius: "4px",   bg: "#E8E4DF", padding: 12 },
-    ornament:      { aspect: "1/1",    radius: "50%",   bg: "#1E3558", padding: 20 },
-    tumbler:       { aspect: "1/2.8",  radius: "30%",   bg: "#2A2A3A", padding: 8  },
-    glasstumbler:  { aspect: "1/2.4",  radius: "10%",   bg: "rgba(190,210,222,0.45)", padding: 10 },
-    waterbottle:   { aspect: "1/2.8",  radius: "26%",   bg: "#9CA3AF", padding: 10 },
     hoodie:        { aspect: "4/5",    radius: "8px",   bg: "#1E3558", padding: 16 },
-    cap:           { aspect: "1.6/1",  radius: "50% 50% 10px 10px", bg: "#1E3558", padding: 18 },
     digital:       { aspect: "16/10",  radius: "10px",  bg: "#0E0E18", padding: 14 },
     tapestry:      { aspect: "2/3",    radius: "2px",   bg: "#1E3558", padding: 16 },
     mousepad:      { aspect: "16/9",   radius: "6px",   bg: "#1A1A22", padding: 8  },
-    candle:        { aspect: "1/2.2",  radius: "20%",   bg: "#F5F0E6", padding: 12 },
     laptopsleeve:  { aspect: "4/3",    radius: "4px",   bg: "#2A2A36", padding: 14 },
     keychain:      { aspect: "1/1.3",  radius: "12px",  bg: "#1E3558", padding: 16 },
     luggagetag:    { aspect: "1.6/1",  radius: "8px",   bg: "#D0C4A8", padding: 12 },
@@ -922,7 +1334,7 @@ function GenericViewer({
   };
   const p = profiles[lc] ?? { aspect: "3/4", radius: "8px", bg: "#1E3558", padding: 12 };
 
-  const w = ["tumbler", "glasstumbler", "waterbottle", "candle", "bookmark"].includes(lc) ? "120px" : "220px";
+  const w = lc === "bookmark" ? "120px" : "220px";
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -959,28 +1371,6 @@ function GenericViewer({
               }} />
             )}
 
-            {/* Binding rings (calendar) */}
-            {lc === "calendar" && (
-              <div style={{
-                position: "absolute", top: 4, left: 0, right: 0, height: 10,
-                display: "flex", justifyContent: "space-evenly", alignItems: "center",
-              }}>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <span key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#9A9690" }} />
-                ))}
-              </div>
-            )}
-
-            {/* Gilded cross (Bible) */}
-            {lc === "bible" && (
-              <div style={{
-                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                opacity: 0.5, zIndex: 1,
-              }}>
-                <span style={{ color: "#C9944A", fontSize: 28 }}>✝</span>
-              </div>
-            )}
-
             {portraitUrl ? (
               <img src={portraitUrl} alt="" style={{
                 position: "absolute",
@@ -992,54 +1382,8 @@ function GenericViewer({
               }} />
             ) : (
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}>
-                <span style={{ color: lc === "calendar" || lc === "program" || lc === "bulletin" || lc === "prayercard" ? "#1E3558" : "white", fontSize: 10, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
+                <span style={{ color: lc === "program" || lc === "bulletin" || lc === "prayercard" ? "#1E3558" : "white", fontSize: 10, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
               </div>
-            )}
-
-            {/* Tote / laptop sleeve handles & straps */}
-            {lc === "tote" && (
-              <>
-                <div style={{ position: "absolute", top: -18, left: "25%", width: 8, height: 28, borderRadius: "4px 4px 0 0", border: "4px solid #8B7040", borderBottom: "none" }} />
-                <div style={{ position: "absolute", top: -18, right: "25%", width: 8, height: 28, borderRadius: "4px 4px 0 0", border: "4px solid #8B7040", borderBottom: "none" }} />
-              </>
-            )}
-
-            {/* Ornament cap */}
-            {lc === "ornament" && (
-              <div style={{
-                position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
-                width: 16, height: 20, background: "#C9944A", borderRadius: "2px 2px 0 0",
-              }} />
-            )}
-
-            {/* Tumbler / water-bottle / glass-tumbler cap */}
-            {(lc === "tumbler" || lc === "waterbottle" || lc === "glasstumbler") && (
-              <div style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: lc === "glasstumbler" ? "4%" : "10%",
-                background: lc === "glasstumbler" ? "rgba(255,255,255,0.2)" : "#1A1A28",
-                borderRadius: "30% 30% 0 0",
-              }} />
-            )}
-
-            {/* Candle flame + wick */}
-            {lc === "candle" && (
-              <div style={{ position: "absolute", top: -22, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
-                <div style={{ width: 2, height: 10, background: "#3A3026", margin: "0 auto" }} />
-                <div style={{
-                  width: 10, height: 16, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
-                  background: "radial-gradient(circle at 50% 70%, #FFD27A 0%, #F5982A 55%, #C9580A 100%)",
-                  margin: "-2px auto 0",
-                }} />
-              </div>
-            )}
-
-            {/* Baseball cap brim */}
-            {lc === "cap" && (
-              <div style={{
-                position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
-                width: "85%", height: 16,
-                background: "#162844", borderRadius: "0 0 50% 50%",
-              }} />
             )}
 
             {/* Laptop sleeve zipper */}
@@ -1147,12 +1491,12 @@ export default function ProductViewer({
     );
   }
 
-  // Drinkware — true 3D cylinder mug, optionally with a travel lid
-  if (productKey === "mug")       return <MugViewer portraitUrl={portraitUrl} />;
-  if (productKey === "travelmug") return <MugViewer portraitUrl={portraitUrl} lidded />;
-  if (productKey === "tumbler" || productKey === "glasstumbler" || productKey === "waterbottle") {
-    return <GenericViewer portraitUrl={portraitUrl} shapeKey={productKey} />;
-  }
+  // Drinkware — true 3D cylinders, each shaped/material'd like the real object
+  if (productKey === "mug")          return <MugViewer portraitUrl={portraitUrl} />;
+  if (productKey === "travelmug")    return <MugViewer portraitUrl={portraitUrl} lidded />;
+  if (productKey === "tumbler")      return <TumblerViewer portraitUrl={portraitUrl} />;
+  if (productKey === "glasstumbler") return <GlassTumblerViewer portraitUrl={portraitUrl} />;
+  if (productKey === "waterbottle")  return <WaterBottleViewer portraitUrl={portraitUrl} />;
 
   // Art & Prints — same 3D box, different material dressing
   if (productKey === "canvas")     return <CanvasViewer portraitUrl={portraitUrl} material="canvas" />;
@@ -1162,14 +1506,26 @@ export default function ProductViewer({
   if (productKey === "poster")     return <CanvasViewer portraitUrl={portraitUrl} material="poster" />;
   if (productKey === "digital")    return <GenericViewer portraitUrl={portraitUrl} shapeKey="digital" />;
 
-  // Accessories — phone cases share the iPhone-style 3D model, platform-skinned
-  if (productKey === "phonecase")   return <PhoneViewer portraitUrl={portraitUrl} platform="ios" />;
-  if (productKey === "androidcase") return <PhoneViewer portraitUrl={portraitUrl} platform="android" />;
-
-  // Home & Lifestyle — blanket variants share the draped-fabric viewer
+  // Home & Lifestyle — true product shapes for the 3D ones
   if (productKey === "blanket")      return <BlanketViewer portraitUrl={portraitUrl} variant="sherpa" />;
   if (productKey === "throwblanket") return <BlanketViewer portraitUrl={portraitUrl} variant="throw" />;
+  if (productKey === "candle")       return <CandleViewer portraitUrl={portraitUrl} />;
 
-  // Everything else falls back to the flexible shape-profile viewer
+  // Accessories — phone cases share the iPhone-style 3D model, platform-skinned;
+  // tote and ornament get their true bag/sphere shapes
+  if (productKey === "phonecase")   return <PhoneViewer portraitUrl={portraitUrl} platform="ios" />;
+  if (productKey === "androidcase") return <PhoneViewer portraitUrl={portraitUrl} platform="android" />;
+  if (productKey === "tote")        return <ToteViewer portraitUrl={portraitUrl} />;
+  if (productKey === "ornament")    return <OrnamentViewer portraitUrl={portraitUrl} />;
+
+  // Apparel accessory — domed cap shape
+  if (productKey === "cap") return <CapViewer portraitUrl={portraitUrl} />;
+
+  // Family Legacy Collection — every book-shaped item gets the closed-book viewer
+  if (["journal", "prayerjournal", "bible", "calendar", "recipebook", "guestbook"].includes(productKey)) {
+    return <BookViewer portraitUrl={portraitUrl} variant={productKey as BookVariant} />;
+  }
+
+  // Everything else (flat paper/fabric goods) falls back to the shape-profile viewer
   return <GenericViewer portraitUrl={portraitUrl} shapeKey={productKey} />;
 }
