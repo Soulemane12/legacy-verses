@@ -75,7 +75,7 @@ function Controls({
 // ─────────────────────────────────────────────────────────────────────────────
 // MUG — true CSS 3D cylinder (24 panels) so the portrait wraps realistically
 // ─────────────────────────────────────────────────────────────────────────────
-function MugViewer({ portraitUrl }: { portraitUrl: string | null }) {
+function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null; lidded?: boolean }) {
   const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
 
   const N      = 24;          // number of vertical cylinder panels
@@ -118,40 +118,69 @@ function MugViewer({ portraitUrl }: { portraitUrl: string | null }) {
           margin: "0 auto",
         }}>
 
-          {/* ── Top opening disc (coffee visible inside) ── */}
-          {/* Ceramic rim ring: slightly above body top */}
+          {/* ── Top opening disc (coffee visible inside) — or a travel lid ── */}
+          {/* Ceramic/lid rim ring: slightly above body top */}
           <div style={{
             position: "absolute",
             top: 0, left: 0,
             width: R * 2, height: R * 2,
             borderRadius: "50%",
-            background: "#D8D3CC",
+            background: lidded ? "#22242B" : "#D8D3CC",
             marginTop: -R,
             transform: "rotateX(90deg)",
             transformOrigin: "50% 100%",
           }} />
-          {/* Coffee surface (darker oval inside rim) */}
-          <div style={{
-            position: "absolute",
-            top: R * 0.18, left: R * 0.18,
-            width: R * 1.64, height: R * 1.64,
-            borderRadius: "50%",
-            background: "radial-gradient(ellipse at 38% 38%, #5C3A1E 0%, #2A1508 60%, #1A0E05 100%)",
-            marginTop: -R,
-            transform: "rotateX(90deg)",
-            transformOrigin: "50% 100%",
-          }} />
-          {/* Tiny coffee highlight (light reflection) */}
-          <div style={{
-            position: "absolute",
-            top: R * 0.38, left: R * 0.42,
-            width: R * 0.28, height: R * 0.18,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.12)",
-            marginTop: -R,
-            transform: "rotateX(90deg)",
-            transformOrigin: "50% 100%",
-          }} />
+          {lidded ? (
+            <>
+              {/* Lid dome */}
+              <div style={{
+                position: "absolute",
+                top: R * 0.12, left: R * 0.12,
+                width: R * 1.76, height: R * 1.76,
+                borderRadius: "50%",
+                background: "radial-gradient(ellipse at 35% 35%, #3A3D46 0%, #1C1E24 70%, #101115 100%)",
+                marginTop: -R,
+                transform: "rotateX(90deg)",
+                transformOrigin: "50% 100%",
+              }} />
+              {/* Sip-hole slider */}
+              <div style={{
+                position: "absolute",
+                top: R * 0.42, left: R * 0.62,
+                width: R * 0.5, height: R * 0.3,
+                borderRadius: "40%",
+                background: "#0A0A0D",
+                marginTop: -R,
+                transform: "rotateX(90deg)",
+                transformOrigin: "50% 100%",
+              }} />
+            </>
+          ) : (
+            <>
+              {/* Coffee surface (darker oval inside rim) */}
+              <div style={{
+                position: "absolute",
+                top: R * 0.18, left: R * 0.18,
+                width: R * 1.64, height: R * 1.64,
+                borderRadius: "50%",
+                background: "radial-gradient(ellipse at 38% 38%, #5C3A1E 0%, #2A1508 60%, #1A0E05 100%)",
+                marginTop: -R,
+                transform: "rotateX(90deg)",
+                transformOrigin: "50% 100%",
+              }} />
+              {/* Tiny coffee highlight (light reflection) */}
+              <div style={{
+                position: "absolute",
+                top: R * 0.38, left: R * 0.42,
+                width: R * 0.28, height: R * 0.18,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.12)",
+                marginTop: -R,
+                transform: "rotateX(90deg)",
+                transformOrigin: "50% 100%",
+              }} />
+            </>
+          )}
 
           {/* ── Cylinder panels (portrait wraps around here) ── */}
           {Array.from({ length: N }).map((_, i) => {
@@ -280,11 +309,24 @@ function MugViewer({ portraitUrl }: { portraitUrl: string | null }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // CANVAS / FRAMED — CSS 3D box, wood-grain frame, gallery mat, draggable
 // ─────────────────────────────────────────────────────────────────────────────
-function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; framed: boolean }) {
+type CanvasMaterial = "canvas" | "framed" | "acrylic" | "metal" | "poster";
+
+function CanvasViewer({ portraitUrl, material }: { portraitUrl: string | null; material: CanvasMaterial }) {
   const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
-  const DEPTH  = 28;
+  const framed = material === "framed";
+  const DEPTH  = material === "acrylic" || material === "metal" || material === "poster" ? 6 : 28;
   const MAT    = framed ? 18 : 0;    // white mat width (framed prints only)
   const FRAME  = framed ? 16 : 0;    // outer frame width
+
+  // Edge styling per material (used for the 4 depth sides + front border)
+  const edgeStyle: Record<CanvasMaterial, { front: string; right: string; left: string; top: string; bottom: string }> = {
+    canvas:  { front: "#F0EDE8", right: "linear-gradient(to right, #3A2810, #4E3618)", left: "linear-gradient(to left, #2E1F0C, #3A2810)", top: "linear-gradient(to top, #3A2810, #4E3618)", bottom: "linear-gradient(to bottom, #2E1F0C, #3A2810)" },
+    framed:  { front: "#2A1F14", right: "", left: "", top: "", bottom: "" }, // wood grain applied separately
+    acrylic: { front: "#EAEAEE", right: "linear-gradient(to right, rgba(255,255,255,0.5), rgba(180,190,200,0.7))", left: "linear-gradient(to left, rgba(255,255,255,0.5), rgba(180,190,200,0.7))", top: "linear-gradient(to top, rgba(255,255,255,0.5), rgba(180,190,200,0.7))", bottom: "linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(180,190,200,0.7))" },
+    metal:   { front: "#C8CCD2", right: "linear-gradient(to right, #9CA2AC, #C8CCD2)", left: "linear-gradient(to left, #9CA2AC, #C8CCD2)", top: "linear-gradient(to top, #9CA2AC, #C8CCD2)", bottom: "linear-gradient(to bottom, #9CA2AC, #C8CCD2)" },
+    poster:  { front: "#F5F3EE", right: "#E2DFD6", left: "#E2DFD6", top: "#E2DFD6", bottom: "#E2DFD6" },
+  };
+  const edge = edgeStyle[material];
 
   const panelDrag = {
     onMouseDown:  (e: React.MouseEvent)  => down(e.clientX),
@@ -322,7 +364,7 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
           <div style={{
             position: "absolute", inset: 0,
             backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-            background: framed ? "#2A1F14" : "#F0EDE8",
+            background: edge.front,
             boxShadow: "0 6px 32px rgba(0,0,0,0.55)",
           }}>
             {/* Frame border */}
@@ -358,11 +400,18 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
                 </div>
               )}
             </div>
-            {/* Gallery-wrap fold shadows (subtle inner shadow to simulate canvas wrap) */}
-            {!framed && (
+            {/* Gallery-wrap fold shadows (canvas only) */}
+            {material === "canvas" && (
               <div style={{
                 position: "absolute", inset: 0, pointerEvents: "none",
                 boxShadow: "inset 0 0 18px rgba(0,0,0,0.18)",
+              }} />
+            )}
+            {/* Glossy sheen sweep (acrylic + metal) */}
+            {(material === "acrylic" || material === "metal") && (
+              <div style={{
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: "linear-gradient(115deg, rgba(255,255,255,0.32) 0%, transparent 35%, transparent 65%, rgba(255,255,255,0.1) 100%)",
               }} />
             )}
           </div>
@@ -371,7 +420,7 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
           <div style={{
             position: "absolute", top: 0, right: -DEPTH,
             width: DEPTH, height: "100%",
-            background: framed ? woodGrain : "linear-gradient(to right, #3A2810, #4E3618)",
+            background: framed ? woodGrain : edge.right,
             backgroundSize: framed ? "40px 200px" : undefined,
             transform: "rotateY(-90deg)", transformOrigin: "0% 50%",
             backfaceVisibility: "hidden",
@@ -381,7 +430,7 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
           <div style={{
             position: "absolute", top: 0, left: -DEPTH,
             width: DEPTH, height: "100%",
-            background: framed ? woodGrain : "linear-gradient(to left, #2E1F0C, #3A2810)",
+            background: framed ? woodGrain : edge.left,
             backgroundSize: framed ? "40px 200px" : undefined,
             transform: "rotateY(90deg)", transformOrigin: "100% 50%",
             backfaceVisibility: "hidden",
@@ -391,7 +440,7 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
           <div style={{
             position: "absolute", top: -DEPTH, left: 0,
             width: "100%", height: DEPTH,
-            background: framed ? woodGrain : "linear-gradient(to top, #3A2810, #4E3618)",
+            background: framed ? woodGrain : edge.top,
             backgroundSize: framed ? "200px 40px" : undefined,
             transform: "rotateX(90deg)", transformOrigin: "50% 100%",
             backfaceVisibility: "hidden",
@@ -401,7 +450,7 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
           <div style={{
             position: "absolute", bottom: -DEPTH, left: 0,
             width: "100%", height: DEPTH,
-            background: framed ? woodGrain : "linear-gradient(to bottom, #2E1F0C, #3A2810)",
+            background: framed ? woodGrain : edge.bottom,
             backgroundSize: framed ? "200px 40px" : undefined,
             transform: "rotateX(-90deg)", transformOrigin: "50% 0%",
             backfaceVisibility: "hidden",
@@ -412,16 +461,19 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
             position: "absolute", inset: 0,
             backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
             transform: "rotateY(180deg)",
-            background: "#C4B89A",
+            background: material === "canvas" ? "#C4B89A" : material === "poster" ? "#EDEAE2" : "#A8ACB2",
           }}>
-            {/* Canvas stretcher bars */}
-            <div style={{ position: "absolute", inset: 10, border: "1.5px solid #9A8060", opacity: 0.6 }} />
-            <div style={{ position: "absolute", top: "50%", left: 10, right: 10, height: "1.5px", background: "#9A8060", opacity: 0.5 }} />
-            <div style={{ position: "absolute", left: "50%", top: 10, bottom: 10, width: "1.5px", background: "#9A8060", opacity: 0.5 }} />
+            {material === "canvas" && (
+              <>
+                <div style={{ position: "absolute", inset: 10, border: "1.5px solid #9A8060", opacity: 0.6 }} />
+                <div style={{ position: "absolute", top: "50%", left: 10, right: 10, height: "1.5px", background: "#9A8060", opacity: 0.5 }} />
+                <div style={{ position: "absolute", left: "50%", top: 10, bottom: 10, width: "1.5px", background: "#9A8060", opacity: 0.5 }} />
+              </>
+            )}
             <p style={{
               position: "absolute", bottom: 18, left: 0, right: 0,
               textAlign: "center", fontSize: 9, letterSpacing: 3, fontFamily: "serif",
-              color: "#7A6040", opacity: 0.8,
+              color: material === "canvas" ? "#7A6040" : "#6A6E76", opacity: 0.8,
             }}>LEGACY VERSES™</p>
           </div>
         </div>
@@ -440,9 +492,10 @@ function CanvasViewer({ portraitUrl, framed }: { portraitUrl: string | null; fra
 // ─────────────────────────────────────────────────────────────────────────────
 // PHONE — iPhone 15 Pro style, portrait on the case back, drag-rotatable
 // ─────────────────────────────────────────────────────────────────────────────
-function PhoneViewer({ portraitUrl }: { portraitUrl: string | null }) {
+function PhoneViewer({ portraitUrl, platform = "ios" }: { portraitUrl: string | null; platform?: "ios" | "android" }) {
   const { rotY, dragging, down, move, up, goTo, isFront } = useDragY();
   const uid = "iph";
+  const isAndroid = platform === "android";
 
   // Screen side (front) — shows lock screen
   const FrontFace = () => (
@@ -477,12 +530,19 @@ function PhoneViewer({ portraitUrl }: { portraitUrl: string | null }) {
         </linearGradient>
       </defs>
 
-      {/* Dynamic Island */}
-      <rect x="86" y="22" width="85" height="30" rx="15" fill="#000" />
-
-      {/* Front camera dot inside island */}
-      <circle cx="152" cy="37" r="5.5" fill="#0A0A0A" />
-      <circle cx="152" cy="37" r="3" fill="#0D0D14" />
+      {/* Dynamic Island (iOS) or punch-hole front camera (Android) */}
+      {isAndroid ? (
+        <>
+          <circle cx="128" cy="34" r="7" fill="#000" />
+          <circle cx="128" cy="34" r="4" fill="#0D0D14" />
+        </>
+      ) : (
+        <>
+          <rect x="86" y="22" width="85" height="30" rx="15" fill="#000" />
+          <circle cx="152" cy="37" r="5.5" fill="#0A0A0A" />
+          <circle cx="152" cy="37" r="3" fill="#0D0D14" />
+        </>
+      )}
 
       {/* Time */}
       <text x="128" y="205" textAnchor="middle" fill="white" fillOpacity="0.95"
@@ -533,10 +593,21 @@ function PhoneViewer({ portraitUrl }: { portraitUrl: string | null }) {
     <svg viewBox="0 0 257 524" style={{ width: "100%", height: "100%" }} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id={`${uid}-frame-b`} x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#B8B6B4" />
-          <stop offset="40%"  stopColor="#9A9896" />
-          <stop offset="70%"  stopColor="#AEACAA" />
-          <stop offset="100%" stopColor="#888684" />
+          {isAndroid ? (
+            <>
+              <stop offset="0%"   stopColor="#5A6B7A" />
+              <stop offset="40%"  stopColor="#3E4A56" />
+              <stop offset="70%"  stopColor="#4A5662" />
+              <stop offset="100%" stopColor="#2E3640" />
+            </>
+          ) : (
+            <>
+              <stop offset="0%"   stopColor="#B8B6B4" />
+              <stop offset="40%"  stopColor="#9A9896" />
+              <stop offset="70%"  stopColor="#AEACAA" />
+              <stop offset="100%" stopColor="#888684" />
+            </>
+          )}
         </linearGradient>
         {/* Case back: softer matte plastic */}
         <linearGradient id={`${uid}-case`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -601,16 +672,19 @@ function PhoneViewer({ portraitUrl }: { portraitUrl: string | null }) {
       <circle cx="82" cy="88" r="7"  fill="rgba(40,40,60,0.8)" />
       <ellipse cx="77" cy="83" rx="3.5" ry="2" fill="rgba(255,255,255,0.1)" transform="rotate(-30 77 83)" />
 
-      {/* Ultra-wide lens */}
-      <circle cx="100" cy="42" r="16" fill="#0A0A12" />
-      <circle cx="100" cy="42" r="13" fill={`url(#${uid}-lens)`} />
-      <circle cx="100" cy="42" r="10" fill="#12121A" />
-      <circle cx="100" cy="42" r="5"  fill="rgba(40,40,60,0.8)" />
-      <ellipse cx="96"  cy="38" rx="2.5" ry="1.5" fill="rgba(255,255,255,0.1)" transform="rotate(-30 96 38)" />
+      {/* Ultra-wide lens + LiDAR (iOS triple-camera only) */}
+      {!isAndroid && (
+        <>
+          <circle cx="100" cy="42" r="16" fill="#0A0A12" />
+          <circle cx="100" cy="42" r="13" fill={`url(#${uid}-lens)`} />
+          <circle cx="100" cy="42" r="10" fill="#12121A" />
+          <circle cx="100" cy="42" r="5"  fill="rgba(40,40,60,0.8)" />
+          <ellipse cx="96"  cy="38" rx="2.5" ry="1.5" fill="rgba(255,255,255,0.1)" transform="rotate(-30 96 38)" />
 
-      {/* LiDAR sensor */}
-      <circle cx="54" cy="92" r="9" fill="#0C0C14" />
-      <circle cx="54" cy="92" r="6" fill="#161620" />
+          <circle cx="54" cy="92" r="9" fill="#0C0C14" />
+          <circle cx="54" cy="92" r="6" fill="#161620" />
+        </>
+      )}
 
       {/* Flash */}
       <circle cx="92" cy="54" r="8" fill="#1A1A10" />
@@ -683,7 +757,10 @@ function PhoneViewer({ portraitUrl }: { portraitUrl: string | null }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // BLANKET — draped perspective with fold detail and fabric texture
 // ─────────────────────────────────────────────────────────────────────────────
-function BlanketViewer({ portraitUrl }: { portraitUrl: string | null }) {
+function BlanketViewer({ portraitUrl, variant = "sherpa" }: { portraitUrl: string | null; variant?: "sherpa" | "throw" }) {
+  const isThrow = variant === "throw";
+  const baseColor = isThrow ? "#6B7280" : "#1E3558";
+  const foldColor = isThrow ? "#565D68" : "#162844";
   return (
     <div className="select-none flex flex-col items-center gap-3">
       <div style={{ perspective: "900px" }}>
@@ -698,7 +775,7 @@ function BlanketViewer({ portraitUrl }: { portraitUrl: string | null }) {
             position: "absolute",
             top: 0, left: 0, right: 0,
             height: "14%",
-            background: "#162844",
+            background: foldColor,
             borderRadius: "8px 8px 0 0",
             transformOrigin: "50% 100%",
             transform: "rotateX(-8deg)",
@@ -721,7 +798,7 @@ function BlanketViewer({ portraitUrl }: { portraitUrl: string | null }) {
           <div style={{
             width: "100%",
             aspectRatio: "4/3",
-            background: "#1E3558",
+            background: baseColor,
             borderRadius: "8px",
             overflow: "hidden",
             position: "relative",
@@ -745,22 +822,33 @@ function BlanketViewer({ portraitUrl }: { portraitUrl: string | null }) {
               </div>
             )}
 
-            {/* Sherpa/plush weave texture */}
+            {/* Sherpa/plush weave or knit/waffle texture */}
             <div style={{
               position: "absolute", inset: 0, pointerEvents: "none",
-              backgroundImage: [
+              backgroundImage: isThrow ? [
+                "repeating-linear-gradient(45deg,  transparent, transparent 5px, rgba(0,0,0,0.06) 5px, rgba(0,0,0,0.06) 6px)",
+                "repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(255,255,255,0.04) 5px, rgba(255,255,255,0.04) 6px)",
+              ].join(", ") : [
                 "repeating-linear-gradient(0deg,   transparent, transparent 3px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px)",
                 "repeating-linear-gradient(90deg,  transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px)",
               ].join(", "),
             }} />
 
-            {/* Gold stitched border */}
-            <div style={{
-              position: "absolute", inset: 10,
-              border: "1.5px solid rgba(201,148,74,0.45)",
-              borderRadius: "4px",
-              pointerEvents: "none",
-            }} />
+            {/* Border: knit fringe row (throw) or gold stitching (sherpa) */}
+            {isThrow ? (
+              <div style={{
+                position: "absolute", bottom: 0, left: 0, right: 0, height: 8,
+                backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0px, rgba(255,255,255,0.18) 1.5px, transparent 1.5px, transparent 6px)",
+                pointerEvents: "none",
+              }} />
+            ) : (
+              <div style={{
+                position: "absolute", inset: 10,
+                border: "1.5px solid rgba(201,148,74,0.45)",
+                borderRadius: "4px",
+                pointerEvents: "none",
+              }} />
+            )}
 
             {/* Lighting: lighter top-left, darker bottom-right */}
             <div style={{
@@ -792,25 +880,49 @@ function BlanketViewer({ portraitUrl }: { portraitUrl: string | null }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GENERIC — pillow, tote, journal, ornament, tumbler
+// GENERIC — every catalog item that doesn't need a dedicated 3D component.
+// `shapeKey` is the product's tab key (not the display label), so multi-word
+// labels like "Wall Tapestry" still resolve to a single lookup key ("tapestry").
 // ─────────────────────────────────────────────────────────────────────────────
 function GenericViewer({
-  portraitUrl, label, icon,
-}: { portraitUrl: string | null; label: string; icon: string }) {
-  const lc = label.toLowerCase();
+  portraitUrl, shapeKey,
+}: { portraitUrl: string | null; shapeKey: string }) {
+  const lc = shapeKey.toLowerCase();
 
   // Shape profiles per product
   const profiles: Record<string, { aspect: string; radius: string; bg: string; padding: number }> = {
-    pillow:  { aspect: "1/1",   radius: "50%",  bg: "#E8E4DF", padding: 18 },
-    tote:    { aspect: "3/4",   radius: "6px",  bg: "#D0C4A8", padding: 14 },
-    journal: { aspect: "3/4",   radius: "4px",  bg: "#1E3558", padding: 10 },
-    ornament:{ aspect: "1/1",   radius: "50%",  bg: "#1E3558", padding: 20 },
-    tumbler: { aspect: "1/2.8", radius: "30%",  bg: "#2A2A3A", padding: 8  },
-    hoodie:  { aspect: "4/5",   radius: "8px",  bg: "#1E3558", padding: 16 },
+    pillow:        { aspect: "1/1",    radius: "50%",   bg: "#E8E4DF", padding: 18 },
+    pillowcase:    { aspect: "4/3",    radius: "6px",   bg: "#E8E4DF", padding: 14 },
+    tote:          { aspect: "3/4",    radius: "6px",   bg: "#D0C4A8", padding: 14 },
+    journal:       { aspect: "3/4",    radius: "4px",   bg: "#1E3558", padding: 10 },
+    prayerjournal: { aspect: "3/4",    radius: "4px",   bg: "#6B4A2A", padding: 10 },
+    bible:         { aspect: "3/4",    radius: "4px",   bg: "#0E0E18", padding: 16 },
+    calendar:      { aspect: "3/4",    radius: "4px",   bg: "#F5F3EE", padding: 14 },
+    recipebook:    { aspect: "3/4",    radius: "4px",   bg: "#8B5E3C", padding: 10 },
+    guestbook:     { aspect: "3/4",    radius: "4px",   bg: "#E8E4DF", padding: 12 },
+    ornament:      { aspect: "1/1",    radius: "50%",   bg: "#1E3558", padding: 20 },
+    tumbler:       { aspect: "1/2.8",  radius: "30%",   bg: "#2A2A3A", padding: 8  },
+    glasstumbler:  { aspect: "1/2.4",  radius: "10%",   bg: "rgba(190,210,222,0.45)", padding: 10 },
+    waterbottle:   { aspect: "1/2.8",  radius: "26%",   bg: "#9CA3AF", padding: 10 },
+    hoodie:        { aspect: "4/5",    radius: "8px",   bg: "#1E3558", padding: 16 },
+    cap:           { aspect: "1.6/1",  radius: "50% 50% 10px 10px", bg: "#1E3558", padding: 18 },
+    digital:       { aspect: "16/10",  radius: "10px",  bg: "#0E0E18", padding: 14 },
+    tapestry:      { aspect: "2/3",    radius: "2px",   bg: "#1E3558", padding: 16 },
+    mousepad:      { aspect: "16/9",   radius: "6px",   bg: "#1A1A22", padding: 8  },
+    candle:        { aspect: "1/2.2",  radius: "20%",   bg: "#F5F0E6", padding: 12 },
+    laptopsleeve:  { aspect: "4/3",    radius: "4px",   bg: "#2A2A36", padding: 14 },
+    keychain:      { aspect: "1/1.3",  radius: "12px",  bg: "#1E3558", padding: 16 },
+    luggagetag:    { aspect: "1.6/1",  radius: "8px",   bg: "#D0C4A8", padding: 12 },
+    program:       { aspect: "0.77/1", radius: "2px",   bg: "#FFFFFF", padding: 16 },
+    bulletin:      { aspect: "0.77/1", radius: "2px",   bg: "#FAFAF7", padding: 16 },
+    prayercard:    { aspect: "2/3.4",  radius: "6px",   bg: "#FFFFFF", padding: 10 },
+    banner:        { aspect: "1/2.4",  radius: "4px",   bg: "#1E3558", padding: 14 },
+    lapelpin:      { aspect: "1/1",    radius: "50%",   bg: "#C9944A", padding: 10 },
+    bookmark:      { aspect: "1/3.6",  radius: "4px",   bg: "#1E3558", padding: 6  },
   };
   const p = profiles[lc] ?? { aspect: "3/4", radius: "8px", bg: "#1E3558", padding: 12 };
 
-  const w = lc === "tumbler" ? "120px" : "220px";
+  const w = ["tumbler", "glasstumbler", "waterbottle", "candle", "bookmark"].includes(lc) ? "120px" : "220px";
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -825,6 +937,7 @@ function GenericViewer({
             borderRadius: p.radius,
             overflow: "hidden",
             position: "relative",
+            border: lc === "glasstumbler" ? "1.5px solid rgba(255,255,255,0.4)" : "none",
             boxShadow: lc === "pillow"
               ? "inset 0 0 30px rgba(0,0,0,0.12), inset 0 0 0 3px rgba(255,255,255,0.3)"
               : "none",
@@ -838,6 +951,36 @@ function GenericViewer({
               }} />
             )}
 
+            {/* Fold line (program / bulletin bifold) */}
+            {(lc === "program" || lc === "bulletin") && (
+              <div style={{
+                position: "absolute", top: 0, bottom: 0, left: "50%",
+                width: "1.5px", background: "rgba(0,0,0,0.12)",
+              }} />
+            )}
+
+            {/* Binding rings (calendar) */}
+            {lc === "calendar" && (
+              <div style={{
+                position: "absolute", top: 4, left: 0, right: 0, height: 10,
+                display: "flex", justifyContent: "space-evenly", alignItems: "center",
+              }}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <span key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "#9A9690" }} />
+                ))}
+              </div>
+            )}
+
+            {/* Gilded cross (Bible) */}
+            {lc === "bible" && (
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: 0.5, zIndex: 1,
+              }}>
+                <span style={{ color: "#C9944A", fontSize: 28 }}>✝</span>
+              </div>
+            )}
+
             {portraitUrl ? (
               <img src={portraitUrl} alt="" style={{
                 position: "absolute",
@@ -845,15 +988,15 @@ function GenericViewer({
                 width: `calc(100% - ${p.padding * 2}px)`,
                 height: `calc(100% - ${p.padding * 2}px)`,
                 objectFit: "cover",
-                borderRadius: lc === "pillow" ? "50%" : "2px",
+                borderRadius: lc === "pillow" || lc === "lapelpin" ? "50%" : "2px",
               }} />
             ) : (
               <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.2 }}>
-                <span style={{ color: "white", fontSize: 10, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
+                <span style={{ color: lc === "calendar" || lc === "program" || lc === "bulletin" || lc === "prayercard" ? "#1E3558" : "white", fontSize: 10, letterSpacing: 2, fontFamily: "serif" }}>PORTRAIT</span>
               </div>
             )}
 
-            {/* Tote bag handles */}
+            {/* Tote / laptop sleeve handles & straps */}
             {lc === "tote" && (
               <>
                 <div style={{ position: "absolute", top: -18, left: "25%", width: 8, height: 28, borderRadius: "4px 4px 0 0", border: "4px solid #8B7040", borderBottom: "none" }} />
@@ -865,18 +1008,83 @@ function GenericViewer({
             {lc === "ornament" && (
               <div style={{
                 position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)",
-                width: 16, height: 20,
-                background: "#C9944A",
-                borderRadius: "2px 2px 0 0",
+                width: 16, height: 20, background: "#C9944A", borderRadius: "2px 2px 0 0",
               }} />
             )}
 
-            {/* Tumbler cap */}
-            {lc === "tumbler" && (
+            {/* Tumbler / water-bottle / glass-tumbler cap */}
+            {(lc === "tumbler" || lc === "waterbottle" || lc === "glasstumbler") && (
               <div style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: "10%",
-                background: "#1A1A28",
+                position: "absolute", top: 0, left: 0, right: 0, height: lc === "glasstumbler" ? "4%" : "10%",
+                background: lc === "glasstumbler" ? "rgba(255,255,255,0.2)" : "#1A1A28",
                 borderRadius: "30% 30% 0 0",
+              }} />
+            )}
+
+            {/* Candle flame + wick */}
+            {lc === "candle" && (
+              <div style={{ position: "absolute", top: -22, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
+                <div style={{ width: 2, height: 10, background: "#3A3026", margin: "0 auto" }} />
+                <div style={{
+                  width: 10, height: 16, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
+                  background: "radial-gradient(circle at 50% 70%, #FFD27A 0%, #F5982A 55%, #C9580A 100%)",
+                  margin: "-2px auto 0",
+                }} />
+              </div>
+            )}
+
+            {/* Baseball cap brim */}
+            {lc === "cap" && (
+              <div style={{
+                position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)",
+                width: "85%", height: 16,
+                background: "#162844", borderRadius: "0 0 50% 50%",
+              }} />
+            )}
+
+            {/* Laptop sleeve zipper */}
+            {lc === "laptopsleeve" && (
+              <div style={{
+                position: "absolute", top: 6, left: "8%", right: "8%", height: 3,
+                background: "linear-gradient(to bottom, #555, #222)", borderRadius: 2,
+              }} />
+            )}
+
+            {/* Keychain ring */}
+            {lc === "keychain" && (
+              <div style={{
+                position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
+                width: 16, height: 16, borderRadius: "50%",
+                border: "3px solid #C9C4BC", background: "transparent",
+              }} />
+            )}
+
+            {/* Luggage tag strap + ID window */}
+            {lc === "luggagetag" && (
+              <>
+                <div style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)", width: 10, height: 18, border: "3px solid #6B5638", borderRadius: "6px 6px 0 0", borderBottom: "none" }} />
+                <div style={{ position: "absolute", bottom: 6, left: "10%", right: "10%", height: "30%", background: "rgba(255,255,255,0.85)", borderRadius: 2 }} />
+              </>
+            )}
+
+            {/* Church banner rod + point */}
+            {lc === "banner" && (
+              <>
+                <div style={{ position: "absolute", top: -6, left: -6, right: -6, height: 8, background: "#8B7040", borderRadius: 4 }} />
+                <div style={{ position: "absolute", bottom: -14, left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "14px solid transparent", borderRight: "14px solid transparent", borderTop: `14px solid ${p.bg}` }} />
+              </>
+            )}
+
+            {/* Lapel pin clasp */}
+            {lc === "lapelpin" && (
+              <div style={{ position: "absolute", bottom: -8, left: "50%", transform: "translateX(-50%)", width: 4, height: 10, background: "#9A9690", borderRadius: 2 }} />
+            )}
+
+            {/* Bookmark tassel */}
+            {lc === "bookmark" && (
+              <div style={{
+                position: "absolute", bottom: -16, left: "50%", transform: "translateX(-50%)",
+                width: 8, height: 18, background: "#C9944A", clipPath: "polygon(0 0, 100% 0, 50% 100%)",
               }} />
             )}
 
@@ -910,11 +1118,19 @@ export interface ProductViewerProps {
   shirtColor?:  "navy" | "black" | "white" | "maroon";
 }
 
+// Garments that reuse TshirtViewer with a note about fit differences.
+const APPAREL_NOTES: Record<string, string> = {
+  hoodie: "Hoodie — same portrait placement as T-Shirt",
+  polo:   "Polo Shirt — portrait placement on the chest, collared fit",
+  jacket: "Jacket — portrait placement on the back panel",
+};
+
 export default function ProductViewer({
-  productKey, productLabel, productIcon, portraitUrl,
+  productKey, portraitUrl,
   photo, verse, verseRef, lovedOne, birthDate, passDate, shirtColor = "navy",
 }: ProductViewerProps) {
-  if (productKey === "tshirt" || productKey === "hoodie") {
+  // Apparel — all reuse the T-shirt viewer (same garment-shaped print area)
+  if (productKey === "tshirt" || productKey in APPAREL_NOTES) {
     return (
       <>
         <TshirtViewer
@@ -922,28 +1138,38 @@ export default function ProductViewer({
           lovedOne={lovedOne} birthDate={birthDate} passDate={passDate}
           color={shirtColor}
         />
-        {productKey === "hoodie" && (
+        {APPAREL_NOTES[productKey] && (
           <p className="text-center text-white/25 text-[10px] mt-1">
-            Hoodie — same portrait placement as T-Shirt
+            {APPAREL_NOTES[productKey]}
           </p>
         )}
       </>
     );
   }
-  if (productKey === "mug" || productKey === "tumbler") {
-    if (productKey === "tumbler") {
-      return <GenericViewer portraitUrl={portraitUrl} label="Tumbler" icon="🥤" />;
-    }
-    return <MugViewer portraitUrl={portraitUrl} />;
+
+  // Drinkware — true 3D cylinder mug, optionally with a travel lid
+  if (productKey === "mug")       return <MugViewer portraitUrl={portraitUrl} />;
+  if (productKey === "travelmug") return <MugViewer portraitUrl={portraitUrl} lidded />;
+  if (productKey === "tumbler" || productKey === "glasstumbler" || productKey === "waterbottle") {
+    return <GenericViewer portraitUrl={portraitUrl} shapeKey={productKey} />;
   }
-  if (productKey === "canvas" || productKey === "framed") {
-    return <CanvasViewer portraitUrl={portraitUrl} framed={productKey === "framed"} />;
-  }
-  if (productKey === "phonecase") {
-    return <PhoneViewer portraitUrl={portraitUrl} />;
-  }
-  if (productKey === "blanket") {
-    return <BlanketViewer portraitUrl={portraitUrl} />;
-  }
-  return <GenericViewer portraitUrl={portraitUrl} label={productLabel} icon={productIcon} />;
+
+  // Art & Prints — same 3D box, different material dressing
+  if (productKey === "canvas")     return <CanvasViewer portraitUrl={portraitUrl} material="canvas" />;
+  if (productKey === "framed")     return <CanvasViewer portraitUrl={portraitUrl} material="framed" />;
+  if (productKey === "acrylic")    return <CanvasViewer portraitUrl={portraitUrl} material="acrylic" />;
+  if (productKey === "metalprint") return <CanvasViewer portraitUrl={portraitUrl} material="metal" />;
+  if (productKey === "poster")     return <CanvasViewer portraitUrl={portraitUrl} material="poster" />;
+  if (productKey === "digital")    return <GenericViewer portraitUrl={portraitUrl} shapeKey="digital" />;
+
+  // Accessories — phone cases share the iPhone-style 3D model, platform-skinned
+  if (productKey === "phonecase")   return <PhoneViewer portraitUrl={portraitUrl} platform="ios" />;
+  if (productKey === "androidcase") return <PhoneViewer portraitUrl={portraitUrl} platform="android" />;
+
+  // Home & Lifestyle — blanket variants share the draped-fabric viewer
+  if (productKey === "blanket")      return <BlanketViewer portraitUrl={portraitUrl} variant="sherpa" />;
+  if (productKey === "throwblanket") return <BlanketViewer portraitUrl={portraitUrl} variant="throw" />;
+
+  // Everything else falls back to the flexible shape-profile viewer
+  return <GenericViewer portraitUrl={portraitUrl} shapeKey={productKey} />;
 }

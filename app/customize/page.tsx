@@ -25,23 +25,72 @@ const SHIRT_COLORS = [
 
 // Products available in the right-panel product switcher.
 // "portrait" is a special tab that shows the raw portrait canvas.
+// Every item from the /products catalog gets its own live preview tab.
 const PRODUCT_TABS = [
-  { key: "portrait",  label: "Portrait",  icon: "✦" },
-  { key: "tshirt",    label: "T-Shirt",   icon: "👕" },
-  { key: "mug",       label: "Mug",       icon: "☕" },
-  { key: "canvas",    label: "Canvas",    icon: "🖼️" },
-  { key: "phonecase", label: "Phone",     icon: "📱" },
-  { key: "blanket",   label: "Blanket",   icon: "🛏️" },
-  { key: "hoodie",    label: "Hoodie",    icon: "🧥" },
-  { key: "tumbler",   label: "Tumbler",   icon: "🥤" },
-  { key: "framed",    label: "Framed",    icon: "🪞" },
-  { key: "pillow",    label: "Pillow",    icon: "🛋️" },
-  { key: "tote",      label: "Tote",      icon: "👜" },
-  { key: "journal",   label: "Journal",   icon: "📖" },
+  { key: "portrait",     label: "Portrait",            icon: "✦" },
+
+  // Apparel
+  { key: "tshirt",       label: "Unisex T-Shirt",      icon: "👕" },
+  { key: "hoodie",       label: "Hoodie & Sweatshirt", icon: "🧥" },
+  { key: "polo",         label: "Polo Shirt",          icon: "👔" },
+  { key: "cap",          label: "Baseball Cap",        icon: "🧢" },
+  { key: "jacket",       label: "Jacket",              icon: "🦺" },
+  { key: "tote",         label: "Tote Bag",            icon: "👜" },
+
+  // Drinkware
+  { key: "mug",          label: "Coffee Mug",          icon: "☕" },
+  { key: "travelmug",    label: "Travel Mug",          icon: "🧋" },
+  { key: "tumbler",      label: "Stainless Tumbler",   icon: "🥤" },
+  { key: "waterbottle",  label: "Water Bottle",        icon: "🧴" },
+  { key: "glasstumbler", label: "Glass Tumbler",       icon: "🥛" },
+
+  // Art & Prints
+  { key: "canvas",       label: "Canvas Gallery Wrap", icon: "🖼️" },
+  { key: "framed",       label: "Framed Print",        icon: "🪞" },
+  { key: "acrylic",      label: "Acrylic Display",     icon: "💎" },
+  { key: "metalprint",   label: "Metal Print",         icon: "🪙" },
+  { key: "digital",      label: "Digital Download",    icon: "🖥️" },
+  { key: "poster",       label: "Memorial Poster",     icon: "📜" },
+
+  // Home & Lifestyle
+  { key: "blanket",      label: "Sherpa Blanket",      icon: "🛏️" },
+  { key: "throwblanket", label: "Throw Blanket",       icon: "🧣" },
+  { key: "pillow",       label: "Decorative Pillow",   icon: "🛋️" },
+  { key: "pillowcase",   label: "Pillow Case",         icon: "🛌" },
+  { key: "tapestry",     label: "Wall Tapestry",       icon: "🏳️" },
+  { key: "mousepad",     label: "Mouse Pad",           icon: "🖱️" },
+  { key: "candle",       label: "Memorial Candle",     icon: "🕯️" },
+
+  // Accessories
+  { key: "phonecase",    label: "iPhone Case",         icon: "📱" },
+  { key: "androidcase",  label: "Android Case",        icon: "🤖" },
+  { key: "laptopsleeve", label: "Laptop Sleeve",       icon: "💻" },
+  { key: "keychain",     label: "Keychain",            icon: "🔑" },
+  { key: "ornament",     label: "Ornament",            icon: "🎄" },
+  { key: "luggagetag",   label: "Luggage Tag",         icon: "🧳" },
+
+  // Family Legacy Collection
+  { key: "journal",      label: "Tribute & Memory Book", icon: "📖" },
+  { key: "prayerjournal",label: "Prayer Journal",      icon: "🙏" },
+  { key: "bible",        label: "Personalized Bible",  icon: "✝️" },
+  { key: "calendar",     label: "Memorial Calendar",   icon: "📅" },
+  { key: "recipebook",   label: "Family Recipe Book",  icon: "🍳" },
+  { key: "guestbook",    label: "Guest Sign-In Book",  icon: "✍️" },
+
+  // Funeral & Church Packages
+  { key: "program",      label: "Memorial Program",    icon: "📰" },
+  { key: "prayercard",   label: "Prayer Card",         icon: "📇" },
+  { key: "bulletin",     label: "Funeral Bulletin",    icon: "📋" },
+  { key: "banner",       label: "Church Banner",       icon: "🚩" },
+  { key: "lapelpin",     label: "Lapel Pin",           icon: "📌" },
+  { key: "bookmark",     label: "Memorial Bookmark",   icon: "🔖" },
 ] as const;
 
 type ShirtColor = (typeof SHIRT_COLORS)[number]["key"];
 type TabKey     = (typeof PRODUCT_TABS)[number]["key"];
+
+// Tabs that reuse the T-shirt viewer and therefore expose the garment color picker.
+const APPAREL_TABS: TabKey[] = ["tshirt", "hoodie", "polo", "jacket"];
 
 export default function Customize() {
   // ── Form state ──────────────────────────────────────────────
@@ -92,7 +141,7 @@ export default function Customize() {
         passDate,
         verse,
         verseRef,
-        shirtColor: activeTab === "tshirt" || activeTab === "hoodie" ? shirtColor : undefined,
+        shirtColor: APPAREL_TABS.includes(activeTab) ? shirtColor : undefined,
         selectedProduct: activeTabData?.label ?? activeTab,
         notes,
         message: `Scripture portrait order for ${lovedOne || "loved one"}.\nProduct: ${activeTabData?.label}\nVerse: "${verse}" — ${verseRef}\nDates: ${birthDate} – ${passDate}\nNotes: ${notes}`,
@@ -318,8 +367,8 @@ export default function Customize() {
                       {activeTab === "portrait" ? "Portrait updates as you fill the form" : "Drag to rotate · portrait updates live"}
                     </p>
                   </div>
-                  {/* T-shirt color picker (only when tshirt/hoodie tab active) */}
-                  {(activeTab === "tshirt" || activeTab === "hoodie") && (
+                  {/* Garment color picker (tshirt/hoodie/polo/jacket all reuse the T-shirt viewer) */}
+                  {APPAREL_TABS.includes(activeTab) && (
                     <div className="flex items-center gap-1.5">
                       {SHIRT_COLORS.map(c => (
                         <button
