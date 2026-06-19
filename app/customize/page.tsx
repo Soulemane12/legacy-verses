@@ -23,67 +23,81 @@ const SHIRT_COLORS = [
   { key: "maroon", label: "Maroon", hex: "#6B1A2A" },
 ] as const;
 
+// Categories mirror the /products catalog sections. Each has its own chip
+// so the item list underneath never needs more than ~7 entries at once —
+// no relying on undiscoverable horizontal scroll to reach every product.
+const CATEGORIES = [
+  { key: "apparel",     label: "Apparel",            icon: "👕" },
+  { key: "drinkware",   label: "Drinkware",          icon: "☕" },
+  { key: "prints",      label: "Art & Prints",       icon: "🖼️" },
+  { key: "home",        label: "Home & Lifestyle",   icon: "🛋️" },
+  { key: "accessories", label: "Accessories",        icon: "📱" },
+  { key: "legacy",      label: "Family Legacy",      icon: "📖" },
+  { key: "funeral",     label: "Funeral & Church",   icon: "⛪" },
+] as const;
+type CategoryKey = (typeof CATEGORIES)[number]["key"];
+
 // Products available in the right-panel product switcher.
-// "portrait" is a special tab that shows the raw portrait canvas.
+// "portrait" is a special tab that shows the raw portrait canvas (no category).
 // Every item from the /products catalog gets its own live preview tab.
 const PRODUCT_TABS = [
-  { key: "portrait",     label: "Portrait",            icon: "✦" },
+  { key: "portrait",     label: "Portrait",            icon: "✦", category: null },
 
   // Apparel
-  { key: "tshirt",       label: "Unisex T-Shirt",      icon: "👕" },
-  { key: "hoodie",       label: "Hoodie & Sweatshirt", icon: "🧥" },
-  { key: "polo",         label: "Polo Shirt",          icon: "👔" },
-  { key: "cap",          label: "Baseball Cap",        icon: "🧢" },
-  { key: "jacket",       label: "Jacket",              icon: "🦺" },
-  { key: "tote",         label: "Tote Bag",            icon: "👜" },
+  { key: "tshirt",       label: "Unisex T-Shirt",      icon: "👕", category: "apparel" },
+  { key: "hoodie",       label: "Hoodie & Sweatshirt", icon: "🧥", category: "apparel" },
+  { key: "polo",         label: "Polo Shirt",          icon: "👔", category: "apparel" },
+  { key: "cap",          label: "Baseball Cap",        icon: "🧢", category: "apparel" },
+  { key: "jacket",       label: "Jacket",              icon: "🦺", category: "apparel" },
+  { key: "tote",         label: "Tote Bag",            icon: "👜", category: "apparel" },
 
   // Drinkware
-  { key: "mug",          label: "Coffee Mug",          icon: "☕" },
-  { key: "travelmug",    label: "Travel Mug",          icon: "🧋" },
-  { key: "tumbler",      label: "Stainless Tumbler",   icon: "🥤" },
-  { key: "waterbottle",  label: "Water Bottle",        icon: "🧴" },
-  { key: "glasstumbler", label: "Glass Tumbler",       icon: "🥛" },
+  { key: "mug",          label: "Coffee Mug",          icon: "☕", category: "drinkware" },
+  { key: "travelmug",    label: "Travel Mug",          icon: "🧋", category: "drinkware" },
+  { key: "tumbler",      label: "Stainless Tumbler",   icon: "🥤", category: "drinkware" },
+  { key: "waterbottle",  label: "Water Bottle",        icon: "🧴", category: "drinkware" },
+  { key: "glasstumbler", label: "Glass Tumbler",       icon: "🥛", category: "drinkware" },
 
   // Art & Prints
-  { key: "canvas",       label: "Canvas Gallery Wrap", icon: "🖼️" },
-  { key: "framed",       label: "Framed Print",        icon: "🪞" },
-  { key: "acrylic",      label: "Acrylic Display",     icon: "💎" },
-  { key: "metalprint",   label: "Metal Print",         icon: "🪙" },
-  { key: "digital",      label: "Digital Download",    icon: "🖥️" },
-  { key: "poster",       label: "Memorial Poster",     icon: "📜" },
+  { key: "canvas",       label: "Canvas Gallery Wrap", icon: "🖼️", category: "prints" },
+  { key: "framed",       label: "Framed Print",        icon: "🪞", category: "prints" },
+  { key: "acrylic",      label: "Acrylic Display",     icon: "💎", category: "prints" },
+  { key: "metalprint",   label: "Metal Print",         icon: "🪙", category: "prints" },
+  { key: "digital",      label: "Digital Download",    icon: "🖥️", category: "prints" },
+  { key: "poster",       label: "Memorial Poster",     icon: "📜", category: "prints" },
 
   // Home & Lifestyle
-  { key: "blanket",      label: "Sherpa Blanket",      icon: "🛏️" },
-  { key: "throwblanket", label: "Throw Blanket",       icon: "🧣" },
-  { key: "pillow",       label: "Decorative Pillow",   icon: "🛋️" },
-  { key: "pillowcase",   label: "Pillow Case",         icon: "🛌" },
-  { key: "tapestry",     label: "Wall Tapestry",       icon: "🏳️" },
-  { key: "mousepad",     label: "Mouse Pad",           icon: "🖱️" },
-  { key: "candle",       label: "Memorial Candle",     icon: "🕯️" },
+  { key: "blanket",      label: "Sherpa Blanket",      icon: "🛏️", category: "home" },
+  { key: "throwblanket", label: "Throw Blanket",       icon: "🧣", category: "home" },
+  { key: "pillow",       label: "Decorative Pillow",   icon: "🛋️", category: "home" },
+  { key: "pillowcase",   label: "Pillow Case",         icon: "🛌", category: "home" },
+  { key: "tapestry",     label: "Wall Tapestry",       icon: "🏳️", category: "home" },
+  { key: "mousepad",     label: "Mouse Pad",           icon: "🖱️", category: "home" },
+  { key: "candle",       label: "Memorial Candle",     icon: "🕯️", category: "home" },
 
   // Accessories
-  { key: "phonecase",    label: "iPhone Case",         icon: "📱" },
-  { key: "androidcase",  label: "Android Case",        icon: "🤖" },
-  { key: "laptopsleeve", label: "Laptop Sleeve",       icon: "💻" },
-  { key: "keychain",     label: "Keychain",            icon: "🔑" },
-  { key: "ornament",     label: "Ornament",            icon: "🎄" },
-  { key: "luggagetag",   label: "Luggage Tag",         icon: "🧳" },
+  { key: "phonecase",    label: "iPhone Case",         icon: "📱", category: "accessories" },
+  { key: "androidcase",  label: "Android Case",        icon: "🤖", category: "accessories" },
+  { key: "laptopsleeve", label: "Laptop Sleeve",       icon: "💻", category: "accessories" },
+  { key: "keychain",     label: "Keychain",            icon: "🔑", category: "accessories" },
+  { key: "ornament",     label: "Ornament",            icon: "🎄", category: "accessories" },
+  { key: "luggagetag",   label: "Luggage Tag",         icon: "🧳", category: "accessories" },
 
   // Family Legacy Collection
-  { key: "journal",      label: "Tribute & Memory Book", icon: "📖" },
-  { key: "prayerjournal",label: "Prayer Journal",      icon: "🙏" },
-  { key: "bible",        label: "Personalized Bible",  icon: "✝️" },
-  { key: "calendar",     label: "Memorial Calendar",   icon: "📅" },
-  { key: "recipebook",   label: "Family Recipe Book",  icon: "🍳" },
-  { key: "guestbook",    label: "Guest Sign-In Book",  icon: "✍️" },
+  { key: "journal",      label: "Tribute & Memory Book", icon: "📖", category: "legacy" },
+  { key: "prayerjournal",label: "Prayer Journal",      icon: "🙏", category: "legacy" },
+  { key: "bible",        label: "Personalized Bible",  icon: "✝️", category: "legacy" },
+  { key: "calendar",     label: "Memorial Calendar",   icon: "📅", category: "legacy" },
+  { key: "recipebook",   label: "Family Recipe Book",  icon: "🍳", category: "legacy" },
+  { key: "guestbook",    label: "Guest Sign-In Book",  icon: "✍️", category: "legacy" },
 
   // Funeral & Church Packages
-  { key: "program",      label: "Memorial Program",    icon: "📰" },
-  { key: "prayercard",   label: "Prayer Card",         icon: "📇" },
-  { key: "bulletin",     label: "Funeral Bulletin",    icon: "📋" },
-  { key: "banner",       label: "Church Banner",       icon: "🚩" },
-  { key: "lapelpin",     label: "Lapel Pin",           icon: "📌" },
-  { key: "bookmark",     label: "Memorial Bookmark",   icon: "🔖" },
+  { key: "program",      label: "Memorial Program",    icon: "📰", category: "funeral" },
+  { key: "prayercard",   label: "Prayer Card",         icon: "📇", category: "funeral" },
+  { key: "bulletin",     label: "Funeral Bulletin",    icon: "📋", category: "funeral" },
+  { key: "banner",       label: "Church Banner",       icon: "🚩", category: "funeral" },
+  { key: "lapelpin",     label: "Lapel Pin",           icon: "📌", category: "funeral" },
+  { key: "bookmark",     label: "Memorial Bookmark",   icon: "🔖", category: "funeral" },
 ] as const;
 
 type ShirtColor = (typeof SHIRT_COLORS)[number]["key"];
@@ -110,6 +124,7 @@ export default function Customize() {
 
   // ── Right-panel state ────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<TabKey>("portrait");
+  const [activeCategory, setActiveCategory] = useState<CategoryKey>("apparel");
   const [portraitUrl, setPortraitUrl] = useState<string | null>(null);
 
   // ── Handlers ────────────────────────────────────────────────
@@ -321,31 +336,68 @@ export default function Customize() {
             ═══════════════════════════════════════════════ */}
             <div className="w-full lg:w-[480px] shrink-0 lg:sticky lg:top-6 flex flex-col gap-3">
 
-              {/* Product tab strip */}
+              {/* Product picker — Portrait pinned, then category chips + items.
+                  Grouped by category (instead of one 42-item scroll strip) so
+                  every product is reachable without relying on hidden horizontal
+                  scroll — each category list tops out at ~7 items. */}
               <div className="bg-white rounded-2xl border border-soft shadow-sm overflow-hidden">
-                <div className="px-4 pt-4 pb-0">
-                  <p className="text-[10px] font-semibold text-charcoal/40 uppercase tracking-widest mb-3">
+                <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-3">
+                  <p className="text-[10px] font-semibold text-charcoal/40 uppercase tracking-widest">
                     Choose a product to preview
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("portrait")}
+                    className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 transition-all duration-200 ${
+                      activeTab === "portrait"
+                        ? "border-gold bg-gold/8 text-gold"
+                        : "border-soft text-charcoal/55 hover:border-gold/50"
+                    }`}
+                  >
+                    <span className="text-sm leading-none">✦</span>
+                    <span className="text-[11px] font-medium leading-none">Portrait</span>
+                  </button>
                 </div>
-                {/* Scrollable tab row */}
-                <div className="flex gap-1 overflow-x-auto px-4 pb-3 scrollbar-hide"
-                     style={{ scrollbarWidth: "none" }}>
-                  {PRODUCT_TABS.map((tab) => {
+
+                {/* Category chips */}
+                <div className="flex gap-1.5 overflow-x-auto px-4 pb-3" style={{ scrollbarWidth: "none" }}>
+                  {CATEGORIES.map((cat) => {
+                    const isActiveCat = activeCategory === cat.key;
+                    return (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => setActiveCategory(cat.key)}
+                        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-all duration-200 ${
+                          isActiveCat
+                            ? "bg-navy text-cream"
+                            : "bg-soft text-charcoal/55 hover:bg-soft/80"
+                        }`}
+                      >
+                        <span className="text-sm leading-none">{cat.icon}</span>
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Items within the selected category */}
+                <div className="flex flex-wrap gap-1.5 px-4 pb-4">
+                  {PRODUCT_TABS.filter((tab) => tab.category === activeCategory).map((tab) => {
                     const isActive = activeTab === tab.key;
                     return (
                       <button
                         key={tab.key}
                         type="button"
                         onClick={() => setActiveTab(tab.key)}
-                        className={`shrink-0 flex flex-col items-center gap-1 px-3 py-2 rounded-xl border-2 transition-all duration-200 ${
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 transition-all duration-200 ${
                           isActive
                             ? "border-gold bg-gold/8 shadow-sm"
-                            : "border-transparent hover:border-soft hover:bg-soft/50"
+                            : "border-transparent bg-soft/40 hover:border-soft hover:bg-soft/60"
                         }`}
                       >
-                        <span className="text-lg leading-none">{tab.icon}</span>
-                        <span className={`text-[10px] font-medium leading-none whitespace-nowrap ${isActive ? "text-gold" : "text-charcoal/50"}`}>
+                        <span className="text-base leading-none">{tab.icon}</span>
+                        <span className={`text-[11px] font-medium leading-none whitespace-nowrap ${isActive ? "text-gold" : "text-charcoal/60"}`}>
                           {tab.label}
                         </span>
                       </button>

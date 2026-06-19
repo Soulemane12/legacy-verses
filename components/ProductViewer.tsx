@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
 import TshirtViewer from "./TshirtViewer";
+import type { Garment } from "./TshirtPreview";
 
 // ─── drag-Y hook ──────────────────────────────────────────────────────────────
 function useDragY() {
@@ -1462,32 +1463,23 @@ export interface ProductViewerProps {
   shirtColor?:  "navy" | "black" | "white" | "maroon";
 }
 
-// Garments that reuse TshirtViewer with a note about fit differences.
-const APPAREL_NOTES: Record<string, string> = {
-  hoodie: "Hoodie — same portrait placement as T-Shirt",
-  polo:   "Polo Shirt — portrait placement on the chest, collared fit",
-  jacket: "Jacket — portrait placement on the back panel",
+// Apparel keys that reuse the garment viewer, each with its own silhouette.
+const APPAREL_GARMENTS: Record<string, Garment> = {
+  tshirt: "tshirt", hoodie: "hoodie", polo: "polo", jacket: "jacket",
 };
 
 export default function ProductViewer({
   productKey, portraitUrl,
   photo, verse, verseRef, lovedOne, birthDate, passDate, shirtColor = "navy",
 }: ProductViewerProps) {
-  // Apparel — all reuse the T-shirt viewer (same garment-shaped print area)
-  if (productKey === "tshirt" || productKey in APPAREL_NOTES) {
+  // Apparel — each garment gets its own silhouette (sleeves, hood, collar, zipper)
+  if (productKey in APPAREL_GARMENTS) {
     return (
-      <>
-        <TshirtViewer
-          photo={photo} verse={verse} verseRef={verseRef}
-          lovedOne={lovedOne} birthDate={birthDate} passDate={passDate}
-          color={shirtColor}
-        />
-        {APPAREL_NOTES[productKey] && (
-          <p className="text-center text-white/25 text-[10px] mt-1">
-            {APPAREL_NOTES[productKey]}
-          </p>
-        )}
-      </>
+      <TshirtViewer
+        photo={photo} verse={verse} verseRef={verseRef}
+        lovedOne={lovedOne} birthDate={birthDate} passDate={passDate}
+        color={shirtColor} garment={APPAREL_GARMENTS[productKey]}
+      />
     );
   }
 

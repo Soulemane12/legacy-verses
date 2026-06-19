@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
-import TshirtPreview from "./TshirtPreview";
+import TshirtPreview, { type Garment } from "./TshirtPreview";
 
 interface Props {
   photo?: string | null;
@@ -10,10 +10,11 @@ interface Props {
   birthDate?: string;
   passDate?: string;
   color?: "navy" | "black" | "white" | "maroon";
+  garment?: Garment;
 }
 
 export default function TshirtViewer({
-  photo, verse = "", verseRef = "", lovedOne = "", birthDate = "", passDate = "", color = "navy",
+  photo, verse = "", verseRef = "", lovedOne = "", birthDate = "", passDate = "", color = "navy", garment = "tshirt",
 }: Props) {
   const [rotX, setRotX] = useState(0);   // vertical tilt (up/down drag)
   const [rotY, setRotY] = useState(0);   // horizontal spin (left/right drag)
@@ -70,7 +71,7 @@ export default function TshirtViewer({
 
   const sharedProps = {
     photo, verse, verseRef, lovedOne, birthDate, passDate,
-    color, noPerspective: true as const,
+    color, garment, noPerspective: true as const,
   };
 
   return (

@@ -9,6 +9,9 @@ const SHIRT_COLORS = {
 
 const ACCENT = "#C9944A";
 
+export type Garment = "tshirt" | "hoodie" | "polo" | "jacket";
+const LONG_SLEEVE: Record<Garment, boolean> = { tshirt: false, hoodie: true, polo: false, jacket: true };
+
 interface Props {
   photo?: string | null;
   verse?: string;
@@ -22,6 +25,7 @@ interface Props {
   uid: string;
   noPerspective?: boolean;
   face?: "front" | "back";
+  garment?: Garment;
 }
 
 export default function TshirtPreview({
@@ -37,10 +41,12 @@ export default function TshirtPreview({
   uid,
   noPerspective = false,
   face = "front",
+  garment = "tshirt",
 }: Props) {
   const c = SHIRT_COLORS[color];
   const ink = c.isLight ? "#1C1C2A" : "#FFFFFF";
   const rotY = tilt === "left" ? "-9deg" : tilt === "right" ? "9deg" : "0deg";
+  const longSleeve = LONG_SLEEVE[garment];
 
   // Unique gradient IDs per shirt instance to avoid SVG ID collisions
   const ls  = `ls-${uid}`;   // left shadow
@@ -108,22 +114,32 @@ export default function TshirtPreview({
           </radialGradient>
         </defs>
 
-        {/* ── Base shirt body ── */}
+        {/* ── Base shirt body (sleeve length varies by garment) ── */}
         <path
-          d="M 138,22
-             C 120,50 106,62 92,70
-             L 18,78  L 4,158  L 88,175
-             L 88,430
-             L 312,430
-             L 312,175 L 396,158 L 382,78
-             L 308,70
-             C 294,62 280,50 262,22
-             Q 233,64 200,67 Q 167,64 138,22 Z"
+          d={longSleeve
+            ? `M 138,22
+               C 120,50 106,62 92,70
+               L 18,78  L 4,158  L 14,250 L 66,245 L 88,175
+               L 88,430
+               L 312,430
+               L 312,175 L 334,245 L 386,250 L 396,158 L 382,78
+               L 308,70
+               C 294,62 280,50 262,22
+               Q 233,64 200,67 Q 167,64 138,22 Z`
+            : `M 138,22
+               C 120,50 106,62 92,70
+               L 18,78  L 4,158  L 88,175
+               L 88,430
+               L 312,430
+               L 312,175 L 396,158 L 382,78
+               L 308,70
+               C 294,62 280,50 262,22
+               Q 233,64 200,67 Q 167,64 138,22 Z`}
           fill={c.bg}
         />
 
-        {/* ── Front V-collar ── */}
-        {face === "front" && (
+        {/* ── Front collar/neckline — garment-specific ── */}
+        {face === "front" && garment === "tshirt" && (
           <path
             d="M 138,22 Q 167,64 200,67 Q 233,64 262,22
                C 243,82 220,93 200,96
@@ -131,9 +147,51 @@ export default function TshirtPreview({
             fill={c.collar}
           />
         )}
+        {face === "front" && garment === "polo" && (
+          <>
+            {/* Open V with two flat collar points */}
+            <path d="M 152,24 L 200,72 L 176,28 Z" fill={c.collar} />
+            <path d="M 248,24 L 200,72 L 224,28 Z" fill={c.collar} />
+            {/* Button placket */}
+            <rect x="196" y="58" width="8" height="58" fill={c.collar} opacity="0.9" />
+            {[0, 1, 2].map((i) => (
+              <circle key={i} cx="200" cy={70 + i * 16} r="2.4" fill={ink} fillOpacity="0.35" />
+            ))}
+          </>
+        )}
+        {face === "front" && garment === "jacket" && (
+          <>
+            {/* Stand-up collar */}
+            <path d="M 158,18 L 242,18 L 232,42 L 168,42 Z" fill={c.collar} />
+            {/* Center zipper */}
+            <line x1="200" y1="44" x2="200" y2="428" stroke={ink} strokeOpacity="0.28" strokeWidth="3" />
+            {Array.from({ length: 24 }).map((_, i) => (
+              <line key={i} x1="197" y1={50 + i * 16} x2="203" y2={50 + i * 16} stroke={ink} strokeOpacity="0.18" strokeWidth="1.2" />
+            ))}
+            {/* Zipper pull */}
+            <rect x="195" y="40" width="10" height="14" rx="2" fill="#C9C4BC" />
+            {/* Hand pockets */}
+            <path d="M 108,300 L 160,300 L 152,340 L 100,336 Z" fill="none" stroke={ink} strokeOpacity="0.18" strokeWidth="1.5" />
+            <path d="M 292,300 L 240,300 L 248,340 L 300,336 Z" fill="none" stroke={ink} strokeOpacity="0.18" strokeWidth="1.5" />
+          </>
+        )}
+        {face === "front" && garment === "hoodie" && (
+          <>
+            {/* Hood peeking above the shoulder line */}
+            <path d="M 148,12 Q 200,-12 252,12 Q 234,42 200,48 Q 166,42 148,12 Z" fill={c.collar} />
+            {/* Drawstrings */}
+            <line x1="186" y1="40" x2="180" y2="92" stroke={ink} strokeOpacity="0.4" strokeWidth="2" />
+            <line x1="214" y1="40" x2="220" y2="92" stroke={ink} strokeOpacity="0.4" strokeWidth="2" />
+            <circle cx="180" cy="94" r="2.6" fill={ink} fillOpacity="0.4" />
+            <circle cx="220" cy="94" r="2.6" fill={ink} fillOpacity="0.4" />
+            {/* Kangaroo pocket */}
+            <path d="M 122,352 Q 200,338 278,352 L 270,408 Q 200,420 130,408 Z" fill={c.collar} opacity="0.55" />
+            <line x1="200" y1="352" x2="200" y2="412" stroke={ink} strokeOpacity="0.12" strokeWidth="1.2" />
+          </>
+        )}
 
-        {/* Collar ribbing — fine horizontal lines for texture */}
-        {face === "front" && Array.from({ length: 5 }).map((_, i) => {
+        {/* Collar ribbing — fine horizontal lines for texture (t-shirt only) */}
+        {face === "front" && garment === "tshirt" && Array.from({ length: 5 }).map((_, i) => {
           const t = (i + 1) / 6;
           // Interpolate along the collar path (simplified as horizontal lines)
           const y1 = 22 + t * (96 - 22);
@@ -148,8 +206,8 @@ export default function TshirtPreview({
           );
         })}
 
-        {/* ── Back crew-neck collar ── */}
-        {face === "back" && (
+        {/* ── Back collar/hood — garment-specific ── */}
+        {face === "back" && garment !== "hoodie" && (
           <>
             <path
               d="M 168,24 Q 200,36 232,24
@@ -171,7 +229,20 @@ export default function TshirtPreview({
                 />
               );
             })}
-            {/* Size-tag detail */}
+          </>
+        )}
+        {face === "back" && garment === "hoodie" && (
+          <>
+            {/* Full hood pouch draped over the back */}
+            <path d="M 140,16 Q 200,-16 260,16 Q 254,76 200,86 Q 146,76 140,16 Z" fill={c.collar} />
+            {/* Hood lining shadow + drawstring channel */}
+            <path d="M 200,86 Q 240,72 250,30" stroke="#000" strokeOpacity="0.12" strokeWidth="2" fill="none" />
+            <line x1="170" y1="20" x2="230" y2="20" stroke={ink} strokeOpacity="0.15" strokeWidth="1.4" strokeDasharray="3 3" />
+          </>
+        )}
+        {/* Size-tag detail (non-hoodie backs only, hood covers this area) */}
+        {face === "back" && garment !== "hoodie" && (
+          <>
             <rect x="191" y="30" width="18" height="11" rx="1.5" fill="white" fillOpacity="0.1" />
             <text x="200" y="38" textAnchor="middle" fill="white" fillOpacity="0.3" fontSize="5" fontFamily="Arial">LV</text>
           </>
@@ -179,22 +250,36 @@ export default function TshirtPreview({
 
         {/* ── Edge shadows ── */}
         {/* Left body + sleeve */}
-        <path d="M 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 155,430 L 155,175 L 88,175 Z" fill={`url(#${ls})`} />
+        <path d={longSleeve
+          ? "M 92,70 L 18,78 L 4,158 L 14,250 L 66,245 L 88,175 L 88,430 L 155,430 L 155,175 L 88,175 Z"
+          : "M 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 155,430 L 155,175 L 88,175 Z"} fill={`url(#${ls})`} />
         {/* Right body + sleeve */}
-        <path d="M 308,70 L 382,78 L 396,158 L 312,175 L 312,430 L 245,430 L 245,175 L 312,175 Z" fill={`url(#${rs})`} />
+        <path d={longSleeve
+          ? "M 308,70 L 382,78 L 396,158 L 386,250 L 334,245 L 312,175 L 312,430 L 245,430 L 245,175 L 312,175 Z"
+          : "M 308,70 L 382,78 L 396,158 L 312,175 L 312,430 L 245,430 L 245,175 L 312,175 Z"} fill={`url(#${rs})`} />
         {/* Bottom hem */}
         <path d="M 88,394 L 88,430 L 312,430 L 312,394 Z" fill={`url(#${bs})`} />
 
         {/* ── Highlights ── */}
         {/* Chest area highlight */}
         <path
-          d="M 138,22 C 120,50 106,62 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 312,430 L 312,175 L 396,158 L 382,78 L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z"
+          d={longSleeve
+            ? `M 138,22 C 120,50 106,62 92,70 L 18,78 L 4,158 L 14,250 L 66,245 L 88,175 L 88,430 L 312,430 L 312,175 L 334,245 L 386,250 L 396,158 L 382,78 L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z`
+            : `M 138,22 C 120,50 106,62 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 312,430 L 312,175 L 396,158 L 382,78 L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z`}
           fill={`url(#${hl})`}
         />
         {/* Left sleeve top highlight */}
         <ellipse cx="53" cy="90" rx="30" ry="20" fill={`url(#${sl})`} />
         {/* Right sleeve top highlight */}
         <ellipse cx="347" cy="90" rx="30" ry="20" fill={`url(#${sl})`} />
+
+        {/* Cuffs (long-sleeve garments only) */}
+        {longSleeve && (
+          <>
+            <rect x="6" y="240" width="62" height="14" rx="3" fill="#000" opacity="0.1" />
+            <rect x="332" y="240" width="62" height="14" rx="3" fill="#000" opacity="0.1" />
+          </>
+        )}
 
         {/* ── Fabric details ── */}
         {/* Center vertical crease */}
@@ -228,7 +313,8 @@ export default function TshirtPreview({
         <div
           className="absolute overflow-hidden"
           style={{
-            left: "27.5%", top: "25%", width: "45%", height: "65%",
+            left: "27.5%", top: "25%", width: "45%",
+            height: garment === "hoodie" ? "55%" : garment === "jacket" ? "58%" : "65%",
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "center", gap: "5%",
           }}
