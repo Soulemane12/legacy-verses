@@ -9,8 +9,46 @@ const SHIRT_COLORS = {
 
 const ACCENT = "#C9944A";
 
-export type Garment = "tshirt" | "hoodie" | "polo" | "jacket";
-const LONG_SLEEVE: Record<Garment, boolean> = { tshirt: false, hoodie: true, polo: false, jacket: true };
+export type Garment = "tshirt" | "hoodie" | "polo" | "jacket" | "sweater";
+const LONG_SLEEVE: Record<Garment, boolean> = { tshirt: false, hoodie: true, polo: false, jacket: true, sweater: true };
+
+// ── Per-garment silhouette geometry (viewBox 0 0 400 440) ──
+// `sleeve` lists the left-side outline points from the shoulder (92,70) down to
+// the armhole join; the right side is mirrored (400-x). `bx` is the body side x
+// (smaller = wider/boxier). This gives every garment its own real outline instead
+// of one shared body. `cuffY` positions the long-sleeve cuff band.
+const GEOM: Record<Garment, { sleeve: [number, number][]; bx: number; cuffY?: number }> = {
+  // standard fit, gently capped short sleeves
+  tshirt:  { sleeve: [[18, 78], [4, 158], [88, 175]], bx: 88 },
+  // slimmer/fitted body, shorter banded sleeves
+  polo:    { sleeve: [[26, 80], [14, 148], [100, 172]], bx: 100 },
+  // relaxed knit, long slim sleeves
+  sweater: { sleeve: [[16, 78], [4, 158], [14, 252], [68, 246], [88, 176]], bx: 88, cuffY: 238 },
+  // bulky: wider drop shoulders, thick long sleeves, boxy body
+  hoodie:  { sleeve: [[10, 84], [2, 180], [8, 272], [74, 262], [84, 184]], bx: 84, cuffY: 250 },
+  // structured: square shoulders, straight body, long sleeves
+  jacket:  { sleeve: [[14, 74], [2, 156], [12, 256], [66, 250], [88, 172]], bx: 88, cuffY: 244 },
+};
+
+function buildBody(g: Garment): string {
+  const { sleeve, bx } = GEOM[g];
+  const hy = 430;
+  const left = sleeve.map(([x, y]) => `L ${x},${y}`).join(" ");
+  const right = [...sleeve].reverse().map(([x, y]) => `L ${400 - x},${y}`).join(" ");
+  return `M 138,22 C 120,50 106,62 92,70 ${left} L ${bx},${hy} L ${400 - bx},${hy} ${right} L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z`;
+}
+
+function shadowHalf(g: Garment, side: "l" | "r"): string {
+  const { sleeve, bx } = GEOM[g];
+  const ay = sleeve[sleeve.length - 1][1];
+  const hy = 430;
+  if (side === "l") {
+    const left = sleeve.map(([x, y]) => `L ${x},${y}`).join(" ");
+    return `M 92,70 ${left} L ${bx},${hy} L 155,${hy} L 155,${ay} L ${bx},${ay} Z`;
+  }
+  const right = sleeve.map(([x, y]) => `L ${400 - x},${y}`).join(" ");
+  return `M 308,70 ${right} L ${400 - bx},${hy} L 245,${hy} L 245,${ay} L ${400 - bx},${ay} Z`;
+}
 
 interface Props {
   photo?: string | null;
@@ -47,6 +85,9 @@ export default function TshirtPreview({
   const ink = c.isLight ? "#1C1C2A" : "#FFFFFF";
   const rotY = tilt === "left" ? "-9deg" : tilt === "right" ? "9deg" : "0deg";
   const longSleeve = LONG_SLEEVE[garment];
+  const bodyD = buildBody(garment);
+  const bx = GEOM[garment].bx;
+  const ribbedHem = garment === "hoodie" || garment === "sweater";
 
   // Unique gradient IDs per shirt instance to avoid SVG ID collisions
   const ls  = `ls-${uid}`;   // left shadow
@@ -114,29 +155,8 @@ export default function TshirtPreview({
           </radialGradient>
         </defs>
 
-        {/* ── Base shirt body (sleeve length varies by garment) ── */}
-        <path
-          d={longSleeve
-            ? `M 138,22
-               C 120,50 106,62 92,70
-               L 18,78  L 4,158  L 14,250 L 66,245 L 88,175
-               L 88,430
-               L 312,430
-               L 312,175 L 334,245 L 386,250 L 396,158 L 382,78
-               L 308,70
-               C 294,62 280,50 262,22
-               Q 233,64 200,67 Q 167,64 138,22 Z`
-            : `M 138,22
-               C 120,50 106,62 92,70
-               L 18,78  L 4,158  L 88,175
-               L 88,430
-               L 312,430
-               L 312,175 L 396,158 L 382,78
-               L 308,70
-               C 294,62 280,50 262,22
-               Q 233,64 200,67 Q 167,64 138,22 Z`}
-          fill={c.bg}
-        />
+        {/* ── Base garment body — unique silhouette per garment ── */}
+        <path d={bodyD} fill={c.bg} />
 
         {/* ── Front collar/neckline — garment-specific ── */}
         {face === "front" && garment === "tshirt" && (
@@ -187,6 +207,27 @@ export default function TshirtPreview({
             {/* Kangaroo pocket */}
             <path d="M 122,352 Q 200,338 278,352 L 270,408 Q 200,420 130,408 Z" fill={c.collar} opacity="0.55" />
             <line x1="200" y1="352" x2="200" y2="412" stroke={ink} strokeOpacity="0.12" strokeWidth="1.2" />
+          </>
+        )}
+        {face === "front" && garment === "sweater" && (
+          <>
+            {/* Wide ribbed crew-neck band — no hood, no zipper (sets it apart from hoodie) */}
+            <path
+              d="M 130,20 Q 167,68 200,71 Q 233,68 270,20
+                 C 248,96 224,108 200,111
+                 C 176,108 152,96 130,20 Z"
+              fill={c.collar}
+            />
+            {/* Crew ribbing — fine concentric lines following the collar */}
+            {Array.from({ length: 4 }).map((_, i) => {
+              const t = (i + 1) / 5;
+              const y1 = 24 + t * (104 - 24);
+              const halfW = 66 * (1 - Math.pow(t - 0.5, 2) * 3.6) * (1 - t * 0.28);
+              return (
+                <line key={i} x1={200 - halfW} y1={y1} x2={200 + halfW} y2={y1}
+                  stroke={ink} strokeOpacity="0.1" strokeWidth="0.9" />
+              );
+            })}
           </>
         )}
 
@@ -248,42 +289,57 @@ export default function TshirtPreview({
           </>
         )}
 
-        {/* ── Edge shadows ── */}
+        {/* ── Edge shadows (track each garment's silhouette) ── */}
         {/* Left body + sleeve */}
-        <path d={longSleeve
-          ? "M 92,70 L 18,78 L 4,158 L 14,250 L 66,245 L 88,175 L 88,430 L 155,430 L 155,175 L 88,175 Z"
-          : "M 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 155,430 L 155,175 L 88,175 Z"} fill={`url(#${ls})`} />
+        <path d={shadowHalf(garment, "l")} fill={`url(#${ls})`} />
         {/* Right body + sleeve */}
-        <path d={longSleeve
-          ? "M 308,70 L 382,78 L 396,158 L 386,250 L 334,245 L 312,175 L 312,430 L 245,430 L 245,175 L 312,175 Z"
-          : "M 308,70 L 382,78 L 396,158 L 312,175 L 312,430 L 245,430 L 245,175 L 312,175 Z"} fill={`url(#${rs})`} />
+        <path d={shadowHalf(garment, "r")} fill={`url(#${rs})`} />
         {/* Bottom hem */}
-        <path d="M 88,394 L 88,430 L 312,430 L 312,394 Z" fill={`url(#${bs})`} />
+        <path d={`M ${bx},394 L ${bx},430 L ${400 - bx},430 L ${400 - bx},394 Z`} fill={`url(#${bs})`} />
 
         {/* ── Highlights ── */}
         {/* Chest area highlight */}
-        <path
-          d={longSleeve
-            ? `M 138,22 C 120,50 106,62 92,70 L 18,78 L 4,158 L 14,250 L 66,245 L 88,175 L 88,430 L 312,430 L 312,175 L 334,245 L 386,250 L 396,158 L 382,78 L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z`
-            : `M 138,22 C 120,50 106,62 92,70 L 18,78 L 4,158 L 88,175 L 88,430 L 312,430 L 312,175 L 396,158 L 382,78 L 308,70 C 294,62 280,50 262,22 Q 233,64 200,67 Q 167,64 138,22 Z`}
-          fill={`url(#${hl})`}
-        />
+        <path d={bodyD} fill={`url(#${hl})`} />
         {/* Left sleeve top highlight */}
         <ellipse cx="53" cy="90" rx="30" ry="20" fill={`url(#${sl})`} />
         {/* Right sleeve top highlight */}
         <ellipse cx="347" cy="90" rx="30" ry="20" fill={`url(#${sl})`} />
 
-        {/* Cuffs (long-sleeve garments only) */}
-        {longSleeve && (
+        {/* Cuffs (long-sleeve garments) — knit garments get ribbed cuffs */}
+        {longSleeve && (() => {
+          const cy = GEOM[garment].cuffY ?? 240;
+          const ribbed = garment === "hoodie" || garment === "sweater";
+          const cuffBg = ribbed ? c.collar : "#000";
+          const cuffOp = ribbed ? 0.7 : 0.12;
+          return (
+            <>
+              <rect x="4" y={cy} width="64" height="16" rx="3" fill={cuffBg} opacity={cuffOp} />
+              <rect x="332" y={cy} width="64" height="16" rx="3" fill={cuffBg} opacity={cuffOp} />
+              {ribbed && Array.from({ length: 9 }).map((_, i) => (
+                <g key={i}>
+                  <line x1={8 + i * 6.6} y1={cy} x2={8 + i * 6.6} y2={cy + 16} stroke={ink} strokeOpacity="0.16" strokeWidth="0.9" />
+                  <line x1={336 + i * 6.6} y1={cy} x2={336 + i * 6.6} y2={cy + 16} stroke={ink} strokeOpacity="0.16" strokeWidth="0.9" />
+                </g>
+              ))}
+            </>
+          );
+        })()}
+
+        {/* Ribbed waistband (knit garments) — banded knit hem with vertical ribs */}
+        {ribbedHem && (
           <>
-            <rect x="6" y="240" width="62" height="14" rx="3" fill="#000" opacity="0.1" />
-            <rect x="332" y="240" width="62" height="14" rx="3" fill="#000" opacity="0.1" />
+            <rect x={bx} y="400" width={400 - 2 * bx} height="30" fill={c.collar} opacity="0.5" />
+            <line x1={bx} y1="400" x2={400 - bx} y2="400" stroke="#000" strokeOpacity="0.12" strokeWidth="1" />
+            {Array.from({ length: 28 }).map((_, i) => {
+              const x = bx + 4 + i * ((400 - 2 * bx - 8) / 27);
+              return <line key={i} x1={x} y1="401" x2={x} y2="429" stroke={ink} strokeOpacity="0.13" strokeWidth="0.9" />;
+            })}
           </>
         )}
 
         {/* ── Fabric details ── */}
         {/* Center vertical crease */}
-        <rect x="88" y="100" width="224" height="330" fill={`url(#${cf})`} />
+        <rect x={bx} y="100" width={400 - 2 * bx} height="330" fill={`url(#${cf})`} />
         {/* Under-arm fold (left) */}
         <ellipse cx="88" cy="175" rx="22" ry="16" fill={`url(#${fld})`} />
         {/* Under-arm fold (right) */}
@@ -314,7 +370,7 @@ export default function TshirtPreview({
           className="absolute overflow-hidden"
           style={{
             left: "27.5%", top: "25%", width: "45%",
-            height: garment === "hoodie" ? "55%" : garment === "jacket" ? "58%" : "65%",
+            height: garment === "hoodie" ? "55%" : garment === "sweater" ? "58%" : garment === "jacket" ? "58%" : "65%",
             display: "flex", flexDirection: "column", alignItems: "center",
             justifyContent: "center", gap: "5%",
           }}

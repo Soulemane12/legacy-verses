@@ -80,12 +80,12 @@ function Controls({
 // ─────────────────────────────────────────────────────────────────────────────
 function Cylinder3D({
   portraitUrl, N = 24, R, H, RIM_H = 16,
-  panelBase, rimColor, baseColor, glassy = false,
+  panelBase, rimColor, baseColor, glassy = false, specular = false,
   topper, handle,
 }: {
   portraitUrl: string | null;
   N?: number; R: number; H: number; RIM_H?: number;
-  panelBase: string; rimColor: string; baseColor: string; glassy?: boolean;
+  panelBase: string; rimColor: string; baseColor: string; glassy?: boolean; specular?: boolean;
   topper?: React.ReactNode;
   handle?: React.ReactNode;
 }) {
@@ -141,6 +141,10 @@ function Cylinder3D({
           {Array.from({ length: N }).map((_, i) => {
             const angle = (i / N) * 360;
             const edgeDark = 0.18 * Math.pow(Math.abs(Math.sin((angle * Math.PI) / 180)), 1.4);
+            // Glossy specular band that sits just left of the front face
+            const spec = specular
+              ? 0.22 * Math.pow(Math.max(0, Math.cos(((angle + 26) * Math.PI) / 180)), 7)
+              : 0;
 
             return (
               <div key={i} style={{
@@ -172,6 +176,12 @@ function Cylinder3D({
                   background: `rgba(0,0,0,${edgeDark.toFixed(3)})`,
                   pointerEvents: "none",
                 }} />
+                {spec > 0.004 && (
+                  <div style={{
+                    position: "absolute", inset: 0, pointerEvents: "none",
+                    background: `rgba(255,255,255,${spec.toFixed(3)})`,
+                  }} />
+                )}
                 {glassy && (
                   <div style={{
                     position: "absolute", inset: 0, pointerEvents: "none",
@@ -249,6 +259,7 @@ function MugViewer({ portraitUrl, lidded = false }: { portraitUrl: string | null
       panelBase="#F5F2EE"
       rimColor={lidded ? "#22242B" : "#D8D3CC"}
       baseColor="#D8D3CC"
+      specular
       topper={lidded ? (
         <>
           <div style={{ position: "absolute", top: R * 0.12, left: R * 0.12, width: R * 1.76, height: R * 1.76, borderRadius: "50%", background: "radial-gradient(ellipse at 35% 35%, #3A3D46 0%, #1C1E24 70%, #101115 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
@@ -289,6 +300,7 @@ function TumblerViewer({ portraitUrl }: { portraitUrl: string | null }) {
       panelBase="#3A3D45"
       rimColor="#1E2024"
       baseColor="#2A2C32"
+      specular
       topper={
         <>
           <div style={{ position: "absolute", top: R * 0.1, left: R * 0.1, width: R * 1.8, height: R * 1.8, borderRadius: "50%", background: "radial-gradient(ellipse at 35% 30%, #5A5E68 0%, #2A2C32 70%, #15161A 100%)", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
@@ -331,6 +343,7 @@ function WaterBottleViewer({ portraitUrl }: { portraitUrl: string | null }) {
       panelBase="#E8E4DF"
       rimColor="#1E3558"
       baseColor="#C9C4BC"
+      specular
       topper={
         <>
           <div style={{ position: "absolute", top: R * 0.18, left: R * 0.18, width: R * 1.64, height: R * 1.64, borderRadius: "50%", background: "#162844", marginTop: -R, transform: "rotateX(90deg)", transformOrigin: "50% 100%" }} />
@@ -1319,7 +1332,6 @@ function GenericViewer({
   const profiles: Record<string, { aspect: string; radius: string; bg: string; padding: number }> = {
     pillow:        { aspect: "1/1",    radius: "50%",   bg: "#E8E4DF", padding: 18 },
     pillowcase:    { aspect: "4/3",    radius: "6px",   bg: "#E8E4DF", padding: 14 },
-    hoodie:        { aspect: "4/5",    radius: "8px",   bg: "#1E3558", padding: 16 },
     digital:       { aspect: "16/10",  radius: "10px",  bg: "#0E0E18", padding: 14 },
     tapestry:      { aspect: "2/3",    radius: "2px",   bg: "#1E3558", padding: 16 },
     mousepad:      { aspect: "16/9",   radius: "6px",   bg: "#1A1A22", padding: 8  },
@@ -1355,12 +1367,49 @@ function GenericViewer({
               ? "inset 0 0 30px rgba(0,0,0,0.12), inset 0 0 0 3px rgba(255,255,255,0.3)"
               : "none",
           }}>
-            {/* Pillow seam */}
+            {/* Pillow — plush puffed body: corner lift + soft center swell */}
             {lc === "pillow" && (
+              <>
+                <div style={{
+                  position: "absolute", inset: 12,
+                  borderRadius: "50%",
+                  border: "1.5px solid rgba(0,0,0,0.08)",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0, pointerEvents: "none",
+                  background: "radial-gradient(ellipse at 50% 45%, rgba(255,255,255,0.35) 0%, transparent 45%), radial-gradient(ellipse at 50% 50%, transparent 58%, rgba(0,0,0,0.16) 100%)",
+                }} />
+                {/* Corner pucker dimples where the seam pulls in */}
+                {[[10, 10], [10, 90], [90, 10], [90, 90]].map(([x, y], i) => (
+                  <div key={i} style={{
+                    position: "absolute", left: `${x}%`, top: `${y}%`, width: 10, height: 10,
+                    transform: "translate(-50%,-50%)", borderRadius: "50%",
+                    background: "radial-gradient(circle, rgba(0,0,0,0.14) 0%, transparent 70%)",
+                  }} />
+                ))}
+              </>
+            )}
+
+            {/* Mousepad — stitched edge + matte rubber surface */}
+            {lc === "mousepad" && (
+              <>
+                <div style={{
+                  position: "absolute", inset: 3, borderRadius: 4,
+                  border: "1px dashed rgba(255,255,255,0.22)",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0, pointerEvents: "none",
+                  background: "linear-gradient(115deg, rgba(255,255,255,0.06) 0%, transparent 40%)",
+                }} />
+              </>
+            )}
+
+            {/* Tapestry / banner — soft hanging fabric folds */}
+            {(lc === "tapestry" || lc === "banner") && (
               <div style={{
-                position: "absolute", inset: 12,
-                borderRadius: "50%",
-                border: "1.5px solid rgba(0,0,0,0.08)",
+                position: "absolute", inset: 0, pointerEvents: "none",
+                background: "repeating-linear-gradient(90deg, rgba(0,0,0,0.10) 0px, transparent 14px, rgba(255,255,255,0.07) 28px, transparent 42px)",
+                mixBlendMode: "soft-light",
               }} />
             )}
 
@@ -1465,7 +1514,7 @@ export interface ProductViewerProps {
 
 // Apparel keys that reuse the garment viewer, each with its own silhouette.
 const APPAREL_GARMENTS: Record<string, Garment> = {
-  tshirt: "tshirt", hoodie: "hoodie", polo: "polo", jacket: "jacket",
+  tshirt: "tshirt", hoodie: "hoodie", sweater: "sweater", polo: "polo", jacket: "jacket",
 };
 
 export default function ProductViewer({

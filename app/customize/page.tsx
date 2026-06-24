@@ -45,7 +45,8 @@ const PRODUCT_TABS = [
 
   // Apparel
   { key: "tshirt",       label: "Unisex T-Shirt",      icon: "👕", category: "apparel" },
-  { key: "hoodie",       label: "Hoodie & Sweatshirt", icon: "🧥", category: "apparel" },
+  { key: "hoodie",       label: "Pullover Hoodie",     icon: "🧥", category: "apparel" },
+  { key: "sweater",      label: "Crewneck Sweater",    icon: "🧶", category: "apparel" },
   { key: "polo",         label: "Polo Shirt",          icon: "👔", category: "apparel" },
   { key: "cap",          label: "Baseball Cap",        icon: "🧢", category: "apparel" },
   { key: "jacket",       label: "Jacket",              icon: "🦺", category: "apparel" },
@@ -104,7 +105,7 @@ type ShirtColor = (typeof SHIRT_COLORS)[number]["key"];
 type TabKey     = (typeof PRODUCT_TABS)[number]["key"];
 
 // Tabs that reuse the T-shirt viewer and therefore expose the garment color picker.
-const APPAREL_TABS: TabKey[] = ["tshirt", "hoodie", "polo", "jacket"];
+const APPAREL_TABS: TabKey[] = ["tshirt", "hoodie", "sweater", "polo", "jacket"];
 
 export default function Customize() {
   // ── Form state ──────────────────────────────────────────────
